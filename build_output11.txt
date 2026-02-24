@@ -1,0 +1,39 @@
+﻿Γû▓ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+
+  Creating an optimized production build ...
+Γ£ô Compiled successfully in 11.5s
+  Running TypeScript ...
+  Collecting page data using 3 workers ...
+  Generating static pages using 3 workers (0/20) ...
+  Generating static pages using 3 workers (5/20) 
+  Generating static pages using 3 workers (10/20) 
+  Generating static pages using 3 workers (15/20) 
+Γ£ô Generating static pages using 3 workers (20/20) in 657.8ms
+  Finalizing page optimization ...
+
+Route (app)
+Γöî Γùï /
+Γö£ Γùï /_not-found
+Γö£ ╞Æ /api/auth/[...nextauth]
+Γö£ ╞Æ /api/v1/auth/2fa/generate
+Γö£ ╞Æ /api/v1/auth/2fa/verify
+Γö£ ╞Æ /api/v1/auth/password
+Γö£ ╞Æ /api/v1/auth/register
+Γö£ ╞Æ /api/v1/create-invoice
+Γö£ ╞Æ /api/v1/dashboard/stats
+Γö£ ╞Æ /api/v1/keys
+Γö£ ╞Æ /api/v1/transactions
+Γö£ ╞Æ /api/v1/withdraw
+Γö£ ╞Æ /api/webhooks/nowpayments
+Γö£ Γùï /dashboard
+Γö£ Γùï /dashboard/api-keys
+Γö£ Γùï /dashboard/settings
+Γö£ Γùï /dashboard/transactions
+Γö£ Γùï /dashboard/withdrawals
+Γöö Γùï /login
+
+
+Γùï  (Static)   prerendered as static content
+╞Æ  (Dynamic)  server-rendered on demand
+

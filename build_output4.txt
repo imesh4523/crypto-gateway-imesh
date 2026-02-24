@@ -1,0 +1,57 @@
+﻿Γû▓ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+
+  Creating an optimized production build ...
+Γ£ô Compiled successfully in 7.5s
+  Running TypeScript ...
+node.exe : Failed to compile.
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~
+    + CategoryInfo          : 
+    NotSpecified: (Failed to  
+   compile.:String) [], Rem   
+ oteException
+    + FullyQualifiedErrorId : 
+    NativeCommandError
+ 
+
+./src/app/api/v1/withdraw/rout
+e.ts:22:57
+Type error: Parameter 'tx' 
+implicitly has an 'any' type.
+
+[0m [90m 20 |[39m
+ [90m 21 |[39m         
+[90m// Run as a transaction 
+to prevent race conditions 
+when checking balance[39m
+[31m[1m>[22m[39m[90m 22 
+|[39m         
+[36mconst[39m result 
+[33m=[39m [36mawait[39m pr
+isma[33m.[39m$transaction([
+36masync[39m (tx) 
+[33m=>[39m {
+ [90m    |[39m              
+                              
+             
+[31m[1m^[22m[39m
+ [90m 23 |[39m             
+[36mconst[39m user 
+[33m=[39m [36mawait[39m tx
+[33m.[39muser[33m.[39mfind
+Unique({ where[33m:[39m { 
+id[33m:[39m userId } 
+})[33m;[39m
+ [90m 24 |[39m
+ [90m 25 |[39m             
+[36mif[39m 
+([33m![39muser) {[0m
+Next.js build worker exited 
+with code: 1 and signal: null

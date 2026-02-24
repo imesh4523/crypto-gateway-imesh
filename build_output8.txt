@@ -1,0 +1,77 @@
+﻿Γû▓ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+
+  Creating an optimized production build ...
+Γ£ô Compiled successfully in 8.9s
+  Running TypeScript ...
+  Collecting page data using 3 workers ...
+node.exe : Error [PrismaClient
+ConstructorValidationError]: 
+Using engine type "client" 
+requires either "adapter" or 
+"accelerateUrl" to be 
+provided to PrismaClient 
+constructor.
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~
+    + CategoryInfo          : 
+    NotSpecified: (Error [Pr  
+  ismaCl...nt constructor.:   
+ String) [], RemoteExcepti    
+on
+    + FullyQualifiedErrorId : 
+    NativeCommandError
+ 
+Read more at https://pris.ly/d
+/client-constructor
+    at module evaluation (C:\U
+sers\azureuser\Desktop\crypto-
+gateway-imesh-main\my-app\.nex
+t\server\chunks\[root-of-the-s
+erver]__b0c81764._.js:1:1316)
+    at instantiateModule (C:\U
+sers\azureuser\Desktop\crypto-
+gateway-imesh-main\my-app\.nex
+t\server\chunks\[turbopack]_ru
+ntime.js:740:9)
+    at getOrInstantiateModuleF
+romParent (C:\Users\azureuser\
+Desktop\crypto-gateway-imesh-m
+ain\my-app\.next\server\chunks
+\[turbopack]_runtime.js:763:12
+)
+    at Context.esmImport [as 
+i] (C:\Users\azureuser\Desktop
+\crypto-gateway-imesh-main\my-
+app\.next\server\chunks\[turbo
+pack]_runtime.js:228:20)
+    at module evaluation (C:\U
+sers\azureuser\Desktop\crypto-
+gateway-imesh-main\my-app\.nex
+t\server\chunks\[root-of-the-s
+erver]__0c8ab40e._.js:1:57651)
+    at instantiateModule (C:\U
+sers\azureuser\Desktop\crypto-
+gateway-imesh-main\my-app\.nex
+t\server\chunks\[turbopack]_ru
+ntime.js:740:9)
+    at 
+instantiateRuntimeModule (C:\U
+sers\azureuser\Desktop\crypto-
+gateway-imesh-main\my-app\.nex
+t\server\chunks\[turbopack]_ru
+ntime.js:768:12)
+
+> Build error occurred
+Error: Failed to collect page 
+data for 
+/api/v1/auth/2fa/generate
+    at ignore-listed frames {
+  type: 'Error'
+}

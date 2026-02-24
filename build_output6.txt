@@ -1,0 +1,53 @@
+﻿Γû▓ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+
+  Creating an optimized production build ...
+Γ£ô Compiled successfully in 14.0s
+  Running TypeScript ...
+node.exe : Failed to compile.
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~
+    + CategoryInfo          : 
+    NotSpecified: (Failed to  
+   compile.:String) [], Rem   
+ oteException
+    + FullyQualifiedErrorId : 
+    NativeCommandError
+ 
+
+./prisma.config.ts:5:5
+Type error: Object literal 
+may only specify known 
+properties, and 'earlyAccess' 
+does not exist in type 
+'PrismaConfig'.
+
+[0m [90m 3 |[39m
+ [90m 4 |[39m 
+[36mexport[39m 
+[36mdefault[39m 
+defineConfig({
+[31m[1m>[22m[39m[90m 5 
+|[39m     
+earlyAccess[33m:[39m 
+[36mtrue[39m[33m,[39m
+ [90m   |[39m     
+[31m[1m^[22m[39m
+ [90m 6 |[39m     
+schema[33m:[39m path[33m.[
+39mjoin(__dirname[33m,[39m 
+[32m'prisma'[39m[33m,[39m 
+[32m'schema.prisma'[39m)[33
+m,[39m
+ [90m 7 |[39m     
+migrate[33m:[39m {
+ [90m 8 |[39m         
+[36masync[39m url() {[0m
+Next.js build worker exited 
+with code: 1 and signal: null

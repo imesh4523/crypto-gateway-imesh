@@ -1,0 +1,25 @@
+﻿node.exe : Loaded Prisma 
+config from prisma.config.ts.
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~
+    + CategoryInfo          : 
+    NotSpecified: (Loaded Pr  
+  isma c...isma.config.ts.:   
+ String) [], RemoteExcepti    
+on
+    + FullyQualifiedErrorId : 
+    NativeCommandError
+ 
+
+Prisma schema loaded from 
+prisma\schema.prisma.
+Datasource "db": SQLite database "dev.db" at "file:./dev.db"
+
+The database is already in sync with the Prisma schema.
+

@@ -1,0 +1,61 @@
+﻿Γû▓ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+
+  Creating an optimized production build ...
+Γ£ô Compiled successfully in 10.4s
+  Running TypeScript ...
+node.exe : Failed to compile.
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~
+    + CategoryInfo          : 
+    NotSpecified: (Failed to  
+   compile.:String) [], Rem   
+ oteException
+    + FullyQualifiedErrorId : 
+    NativeCommandError
+ 
+
+./src/app/api/v1/keys/route.ts
+:50:17
+Type error: Object literal 
+may only specify known 
+properties, and 
+'walletAddress' does not 
+exist in type 
+'(Without<ApiKeyCreateInput, 
+ApiKeyUncheckedCreateInput> & 
+ApiKeyUncheckedCreateInput) | 
+(Without<...> & 
+ApiKeyCreateInput)'.
+
+[0m [90m 48 |[39m          
+       prefix[33m:[39m 
+displayPrefix[33m,[39m
+ [90m 49 |[39m              
+   name[33m:[39m name 
+[33m||[39m [32m'Default 
+API Key'[39m[33m,[39m
+[31m[1m>[22m[39m[90m 50 
+|[39m                 
+walletAddress[33m:[39m walle
+tAddress[33m.[39mtrim()[33m
+,[39m
+ [90m    |[39m              
+   [31m[1m^[22m[39m
+ [90m 51 |[39m              
+   userId[33m:[39m 
+(session[33m.[39muser 
+[36mas[39m 
+any)[33m.[39mid[33m,[39m
+ [90m 52 |[39m             
+}[33m,[39m
+ [90m 53 |[39m         
+})[33m;[39m[0m
+Next.js build worker exited 
+with code: 1 and signal: null

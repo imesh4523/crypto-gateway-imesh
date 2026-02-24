@@ -1,0 +1,51 @@
+﻿Γû▓ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+
+  Creating an optimized production build ...
+Γ£ô Compiled successfully in 8.7s
+  Running TypeScript ...
+node.exe : Failed to compile.
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~
+    + CategoryInfo          : 
+    NotSpecified: (Failed to  
+   compile.:String) [], Rem   
+ oteException
+    + FullyQualifiedErrorId : 
+    NativeCommandError
+ 
+
+./src/app/api/auth/[...nextaut
+h]/route.ts:67:42
+Type error: Cannot find name 
+'authenticator'.
+
+[0m [90m 65 |[39m
+ [90m 66 |[39m              
+       [90m// Verify the 
+token[39m
+[31m[1m>[22m[39m[90m 67 
+|[39m                     
+[36mconst[39m isValidToken 
+[33m=[39m authenticator[33m
+.[39mverify({
+ [90m    |[39m              
+                            
+[31m[1m^[22m[39m
+ [90m 68 |[39m              
+           token[33m:[39m cr
+edentials[33m.[39mtoken[33m
+,[39m
+ [90m 69 |[39m              
+           secret[33m:[39m 
+user[33m.[39mtwoFactorSecret
+ [90m 70 |[39m              
+       })[33m;[39m[0m
+Next.js build worker exited 
+with code: 1 and signal: null

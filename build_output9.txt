@@ -1,0 +1,118 @@
+﻿Γû▓ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+
+  Creating an optimized production build ...
+node.exe : 
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~
+    + CategoryInfo          : 
+    NotSpecified: (:String)   
+  [], RemoteException
+    + FullyQualifiedErrorId : 
+    NativeCommandError
+ 
+> Build error occurred
+Error: Turbopack build failed 
+with 1 errors:
+./src/lib/prisma.ts:2:1
+Export PrismaBetterSQLite3 
+doesn't exist in target module
+[0m [90m 1 |[39m 
+[36mimport[39m { 
+[33mPrismaClient[39m } 
+[36mfrom[39m [32m'@prisma/c
+lient'[39m[33m;[39m
+[31m[1m>[22m[39m[90m 2 
+|[39m [36mimport[39m { 
+[33mPrismaBetterSQLite3[39m 
+} [36mfrom[39m [32m'@prisma
+/adapter-better-sqlite3'[39m
+[33m;[39m
+ [90m   |[39m [31m[1m^[22
+m[39m[31m[1m^[22m[39m[31
+m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31
+m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31
+m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31
+m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31
+m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31
+m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31
+m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31
+m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31
+m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31
+m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31
+m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31
+m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31
+m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31
+m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31
+m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31
+m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31
+m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31
+m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31
+m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31
+m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31
+m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31
+m[1m^[22m[39m[31m[1m^[22
+m[39m[31m[1m^[22m[39m[31
+m[1m^[22m[39m
+ [90m 3 |[39m 
+[36mimport[39m 
+[33mDatabase[39m 
+[36mfrom[39m [32m'better-sq
+lite3'[39m[33m;[39m
+ [90m 4 |[39m 
+[36mimport[39m path 
+[36mfrom[39m 
+[32m'path'[39m[33m;[39m
+ [90m 5 |[39m[0m
+
+The export 
+PrismaBetterSQLite3 was not 
+found in module [project]/node
+_modules/@prisma/adapter-bette
+r-sqlite3/dist/index.mjs 
+[app-route] (ecmascript).
+Did you mean to import 
+PrismaBetterSqlite3?
+All exports of the module are 
+statically known (It doesn't 
+have dynamic exports). So 
+it's known statically that 
+the requested export doesn't 
+exist.
+
+Import trace:
+  App Route:
+    ./src/lib/prisma.ts
+    ./src/app/api/auth/[...nex
+tauth]/route.ts
+
+
+    at <unknown> 
+(./src/lib/prisma.ts:2:1)
