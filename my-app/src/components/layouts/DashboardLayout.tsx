@@ -1,15 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, KeyRound, ReceiptText, ArrowRightLeft, LogOut, Settings } from "lucide-react";
+import { LayoutDashboard, KeyRound, ReceiptText, ArrowRightLeft, LogOut, Settings, Palette } from "lucide-react";
 import { motion } from "framer-motion";
 
 const sidebarLinks = [
     { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
     { name: "Transactions", href: "/dashboard/transactions", icon: ReceiptText },
+    { name: "Checkout Widget", href: "/dashboard/customizer", icon: Palette },
     { name: "API Keys", href: "/dashboard/api-keys", icon: KeyRound },
     { name: "Withdrawals", href: "/dashboard/withdrawals", icon: ArrowRightLeft },
     { name: "Settings", href: "/dashboard/settings", icon: Settings },
@@ -17,6 +18,7 @@ const sidebarLinks = [
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
+    const { data: session } = useSession();
 
     return (
         <div className="min-h-screen bg-slate-950 flex text-slate-200">
@@ -59,7 +61,10 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                 </nav>
 
                 <div className="p-4 border-t border-white/10">
-                    <button className="flex items-center w-full px-3 py-2.5 text-sm font-medium text-slate-400 rounded-lg hover:text-white hover:bg-white/5 transition-colors">
+                    <button
+                        onClick={() => signOut({ callbackUrl: '/' })}
+                        className="flex items-center w-full px-3 py-2.5 text-sm font-medium text-slate-400 rounded-lg hover:text-white hover:bg-white/5 transition-colors"
+                    >
                         <LogOut className="mr-3 h-5 w-5 text-slate-500" />
                         Sign out
                     </button>
@@ -72,11 +77,11 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                 <header className="h-16 border-b border-white/10 flex items-center justify-end px-8 z-10 relative bg-slate-950/40 backdrop-blur-md">
                     <div className="flex items-center gap-4">
                         <div className="text-right hidden sm:block">
-                            <p className="text-sm font-medium text-white">Merchant User</p>
-                            <p className="text-xs text-slate-400">merchant@example.com</p>
+                            <p className="text-sm font-medium text-white">{session?.user?.name || 'Merchant User'}</p>
+                            <p className="text-xs text-slate-400">{session?.user?.email || 'merchant@example.com'}</p>
                         </div>
-                        <div className="h-9 w-9 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center border border-indigo-500/20">
-                            M
+                        <div className="h-9 w-9 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center border border-indigo-500/20 uppercase">
+                            {(session?.user?.name?.[0] || 'M')}
                         </div>
                     </div>
                 </header>

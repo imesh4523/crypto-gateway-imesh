@@ -40,10 +40,10 @@ export async function POST(req: Request) {
 
         const { payment_id, payment_status, actually_paid, pay_currency } = body;
 
-        // We only care about finalized successful payments for this logic
-        if (payment_status !== 'finished') {
+        // We only care about finalized successful payments or partially paid for this logic
+        if (payment_status !== 'finished' && payment_status !== 'partially_paid') {
             // Return 200 so they stop retrying, but we don't process it as a balance addition yet
-            return NextResponse.json({ received: true, status: 'ignored_not_finished' });
+            return NextResponse.json({ received: true, status: `ignored_${payment_status}` });
         }
 
         // 2. Find the pending transaction in our database
@@ -63,10 +63,28 @@ export async function POST(req: Request) {
         }
 
         // 3. Update the Transaction Status
+        // Decide status based on NowPayments status
+        const resolvedStatus = payment_status === 'partially_paid' ? 'SUCCESS' : 'SUCCESS';
+        // Note: For partial payments, actual received amount should be logged. We'll mark as SUCCESS for simplicity, 
+        // but with the exact amount settled if needed. 
+
+        // Ensure we don't double credit
+        if (transaction.status === 'SUCCESS') {
+            return NextResponse.json({ success: true, message: 'Already processed' });
+        }
+
         const updatedTransaction = await prisma.transaction.update({
             where: { id: transaction.id },
-            data: { status: 'SUCCESS' },
+            data: { status: resolvedStatus },
         });
+
+        // Also update the linked invoice 
+        if (transaction.invoiceId) {
+            await prisma.invoice.update({
+                where: { id: transaction.invoiceId },
+                data: { status: 'COMPLETED' }
+            });
+        }
 
         // 4. Update the Merchant's Balance
         const updatedMerchant = await prisma.user.update({
@@ -100,12 +118,21 @@ export async function POST(req: Request) {
                     }
                 };
 
+                // Generate Signature if merchant has a secret
+                let signatureHeader = {};
+                if (updatedMerchant.webhookSecret) {
+                    const hmac = crypto.createHmac('sha512', updatedMerchant.webhookSecret);
+                    hmac.update(JSON.stringify(merchantPayload));
+                    const signature = hmac.digest('hex');
+                    signatureHeader = { 'x-soltio-signature': signature };
+                }
+
                 // Execute async webhook dispatch (un-awaited to respond quickly to provider)
                 fetch(updatedMerchant.webhookUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        // 'x-platform-signature': generateMerchantSignature(merchantPayload, merchantSecret)
+                        ...signatureHeader
                     },
                     body: JSON.stringify(merchantPayload),
                 }).catch(err => {

@@ -1,15 +1,31 @@
-"use client";
-
 import { Card } from "@/components/ui/card";
 import { ArrowRightLeft, Wallet, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { prisma } from "@/lib/prisma";
+import { redirect } from "next/navigation";
 
-const mockWithdrawals = [
-    { id: "wd_1b2c3d", date: "2026-02-23 10:23 AM", amount: "5,000.00", currency: "USDT", address: "Txx...19jZ", status: "COMPLETED", txHash: "0x89f...21a" },
-    { id: "wd_4e5f6g", date: "2026-02-24 08:15 AM", amount: "1,250.00", currency: "USDT", address: "Txx...19jZ", status: "PENDING", txHash: "-" },
-];
+export default async function WithdrawalsPage() {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user) {
+        redirect("/login");
+    }
 
-export default function WithdrawalsPage() {
+    const userId = (session.user as any).id;
+    const user = await prisma.user.findUnique({
+        where: { id: userId },
+    });
+
+    if (!user) {
+        redirect("/login");
+    }
+
+    const withdrawals = await prisma.withdrawal.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" }
+    });
+
     return (
         <div className="space-y-8">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -19,7 +35,7 @@ export default function WithdrawalsPage() {
                     </h1>
                     <p className="text-slate-400 mt-1">Request payouts from your available balance to your crypto wallet.</p>
                 </div>
-                <Button className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full px-6">
+                <Button className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full px-6 opacity-50 cursor-not-allowed">
                     <ArrowRightLeft className="w-4 h-4 mr-2" />
                     Request Payout
                 </Button>
@@ -31,7 +47,7 @@ export default function WithdrawalsPage() {
                         Available to Withdraw
                         <Wallet className="w-5 h-5 text-emerald-400" />
                     </h3>
-                    <span className="text-4xl font-bold text-white">$45,234.00</span>
+                    <span className="text-4xl font-bold text-white">${user.availableBalance.toString()}</span>
                     <p className="text-sm text-emerald-400 mt-2 bg-emerald-500/10 inline-block px-2 py-1 rounded">No minimum limits applied</p>
                 </Card>
 
@@ -40,7 +56,7 @@ export default function WithdrawalsPage() {
                         Pending Payouts
                         <AlertCircle className="w-5 h-5 text-amber-400" />
                     </h3>
-                    <span className="text-4xl font-bold text-white">$1,250.00</span>
+                    <span className="text-4xl font-bold text-white">${user.pendingBalance.toString()}</span>
                     <p className="text-sm text-amber-500/80 mt-2 bg-amber-500/10 inline-block px-2 py-1 rounded">Processing within 24h</p>
                 </Card>
             </div>
@@ -61,12 +77,19 @@ export default function WithdrawalsPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
-                            {mockWithdrawals.map((wd) => (
+                            {withdrawals.length === 0 ? (
+                                <tr>
+                                    <td colSpan={5} className="px-6 py-8 text-center text-slate-400">
+                                        No withdrawal history found.
+                                    </td>
+                                </tr>
+                            ) : null}
+                            {withdrawals.map((wd: any) => (
                                 <tr key={wd.id} className="hover:bg-white/[0.02] transition-colors">
                                     <td className="px-6 py-4 text-slate-300 font-mono text-xs">{wd.id}</td>
-                                    <td className="px-6 py-4 text-slate-400">{wd.date}</td>
+                                    <td className="px-6 py-4 text-slate-400">{new Date(wd.createdAt).toLocaleString()}</td>
                                     <td className="px-6 py-4 text-right">
-                                        <span className="font-medium text-white">{wd.amount}</span>{" "}
+                                        <span className="font-medium text-white">{wd.amount.toString()}</span>{" "}
                                         <span className="text-slate-500">{wd.currency}</span>
                                     </td>
                                     <td className="px-6 py-4">
@@ -78,7 +101,7 @@ export default function WithdrawalsPage() {
                                         {wd.status === "COMPLETED" ? (
                                             <div>
                                                 <span className="text-emerald-400 font-medium text-xs">Completed</span>
-                                                <div className="text-slate-500 font-mono text-[10px] mt-1 hover:text-indigo-400 cursor-pointer">{wd.txHash}</div>
+                                                <div className="text-slate-500 font-mono text-[10px] mt-1 hover:text-indigo-400 cursor-pointer">{wd.txHash || "-"}</div>
                                             </div>
                                         ) : (
                                             <span className="text-amber-400 font-medium text-xs">Pending Review</span>

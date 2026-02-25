@@ -5,6 +5,7 @@ import { CountUp } from './components/CountUp';
 import { AnimatedDonut } from './components/AnimatedDonut';
 import { LiveVerification } from './components/LiveVerification';
 import { AnimatedBarChart } from './components/AnimatedBarChart';
+import { FloatingCryptoIcons } from './components/FloatingCryptoIcons';
 
 export default function Home() {
     return (
@@ -44,6 +45,7 @@ export default function Home() {
             </nav>
 
             <main className="hero" id="home">
+                <FloatingCryptoIcons />
                 <div className="hero-content">
                     <div className="tag-floating tag-blue">Feature!</div>
                     <h1 className="hero-title">Smart finance tools for<br />smarter decisions</h1>

@@ -2,10 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
-
-// In a real app, this would be an env variable: NOWPAYMENTS_MASTER_KEY
-const MASTER_API_KEY = process.env.NOWPAYMENTS_API_KEY || 'your-master-nowpayments-key';
-const NOWPAYMENTS_API_URL = 'https://api.nowpayments.io/v1';
+import crypto from 'crypto';
 
 export async function POST(req: Request) {
     try {
@@ -49,92 +46,49 @@ export async function POST(req: Request) {
 
         const requestedAmount = Number(amount);
 
-        // 3. Call Underlying Provider (e.g., NowPayments) to generate the invoice
-        // MOCK MODE: If using sample key, return a mock response to show UI working
-        var providerData: any;
-        var isMock = false;
-        if (MASTER_API_KEY === 'your-sample-api-key' || MASTER_API_KEY === 'your-master-nowpayments-key') {
-            console.log("Using Mock Mode for Invoice Creation");
-            const mockProviderData = {
-                payment_id: `mock_${Date.now()}`,
-                invoice_url: `https://nowpayments.io/payment/?payment_id=mock_${Date.now()}`,
-                pay_address: "TKv6z8...kR7hN3",
-                amount: requestedAmount,
-                currency: currency
-            };
+        // Generate Custom Unique ID for the site via env var
+        const prefix = process.env.GATEWAY_ID_PREFIX || 'IMESH-';
+        const customId = `${prefix}${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
+        const customTxId = `${prefix}${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
 
-            // Proceed as if provider answered
-            providerData = mockProviderData;
-            isMock = true;
-        } else {
-            const providerResponse = await fetch(`${NOWPAYMENTS_API_URL}/invoice`, {
-                method: 'POST',
-                headers: {
-                    'x-api-key': MASTER_API_KEY,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    price_amount: requestedAmount,
-                    price_currency: currency,
-                    pay_currency: 'USDTTRC20', // Defaulting to USDT for example, could be dynamic
-                    ipn_callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/nowpayments`,
-                    order_id: `platform_${Date.now()}`, // Temporary order ID
-                    order_description: orderDescription || `Order ${orderId}`,
-                }),
-            });
-
-            providerData = await providerResponse.json();
-
-            if (!providerResponse.ok) {
-                console.error('Provider Error (NowPayments):', providerData);
-                return NextResponse.json({
-                    error: 'Failed to create invoice with payment provider',
-                    details: providerData.message || 'Unknown provider error',
-                    hint: 'Please update NOWPAYMENTS_API_KEY in your .env file'
-                }, { status: 502 });
-            }
-        }
-
-        // 4. Calculate Platform Fees
-        // Platform fee: 3.0%, Provider fee: 0.5%, Profit: 2.5%
-        const feePlatformRate = 0.03;
-        const feeProviderRate = 0.005;
-
-        const feePlatform = requestedAmount * feePlatformRate;
-        const feeProvider = requestedAmount * feeProviderRate;
-        const profitPlatform = feePlatform - feeProvider;
-        const amountMerchant = requestedAmount - feePlatform;
-
-        // 5. Save the Pending Transaction in our Database
-        const transaction = await prisma.transaction.create({
+        // 3. Create strictly an Invoice in our DB
+        const invoice = await prisma.invoice.create({
             data: {
-                providerTxId: providerData.payment_id?.toString() || providerData.id?.toString(),
+                id: customId,
+                userId: merchant.id,
                 amount: requestedAmount,
                 currency: currency,
-                feePlatform: feePlatform,
-                feeProvider: feeProvider,
-                profitPlatform: profitPlatform,
-                amountMerchant: amountMerchant,
-                payAddress: providerData.pay_address || providerData.payin_address || null,
-                status: 'PENDING',
-                userId: merchant.id,
-            },
+                orderId: orderId?.toString(),
+                orderDescription: orderDescription?.toString(),
+            }
         });
 
-        // 6. Return the generated invoice details to the Merchant
+        // Create the initial Transaction so it appears in the dashboard immediately
+        await prisma.transaction.create({
+            data: {
+                id: customTxId,
+                platformTxId: customTxId,
+                amount: requestedAmount,
+                currency: currency,
+                status: 'PENDING',
+                userId: merchant.id,
+                invoiceId: invoice.id
+            }
+        });
+
+        // The checkout URL will be on our domain, not NowPayments
+        const checkoutUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/checkout/${invoice.id}`;
+
+        // 4. Return the generated invoice details to the Merchant
         return NextResponse.json({
             success: true,
             data: {
-                platformTxId: transaction.platformTxId,
-                paymentUrl: providerData.invoice_url,
+                invoiceId: invoice.id,
+                platformTxId: customTxId,
+                paymentUrl: checkoutUrl,
                 amount: requestedAmount,
                 currency: currency,
-                status: 'WAITING_FOR_PAYMENT',
-            },
-            merchantFeeSummary: {
-                totalCharged: requestedAmount,
-                fee: feePlatform, // 3%
-                expectedSettlement: amountMerchant, // 97%
+                status: 'CREATED',
             }
         }, { status: 201 });
 

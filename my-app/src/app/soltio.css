@@ -231,6 +231,88 @@ body {
     transform: rotate(15deg);
 }
 
+/* 3D Crypto Coins */
+.crypto-coin {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow:
+        inset 0 4px 6px rgba(255, 255, 255, 0.4),
+        inset 0 -4px 8px rgba(0, 0, 0, 0.4),
+        0 15px 25px rgba(0, 0, 0, 0.4),
+        0 0 30px currentColor;
+    /* current color shadow glow */
+    animation: float-coin 6s ease-in-out infinite;
+    transform-style: preserve-3d;
+    z-index: 5;
+}
+
+.crypto-coin::after {
+    content: '';
+    position: absolute;
+    top: 5%;
+    left: 15%;
+    width: 30%;
+    height: 30%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 70%);
+    border-radius: 50%;
+}
+
+.coin-usdt {
+    background: #26A17B;
+    background: linear-gradient(135deg, #26A17B, #0E5C44);
+    color: rgba(38, 161, 123, 0.4);
+    right: 12%;
+    top: 200px;
+    animation-delay: 1.5s;
+}
+
+.coin-eth {
+    background: linear-gradient(135deg, #627EEA, #283770);
+    color: rgba(98, 126, 234, 0.4);
+    left: 20%;
+    top: 380px;
+    width: 50px;
+    height: 50px;
+    animation-delay: 3s;
+}
+
+.coin-sol {
+    background: linear-gradient(135deg, #00FFA3, #DC1FFF);
+    color: rgba(220, 31, 255, 0.4);
+    right: 18%;
+    top: 450px;
+    width: 55px;
+    height: 55px;
+    animation-delay: 4.5s;
+}
+
+.coin-usdc {
+    background: linear-gradient(135deg, #2775CA, #104179);
+    color: rgba(39, 117, 202, 0.4);
+    right: 35%;
+    top: 120px;
+    width: 45px;
+    height: 45px;
+    animation-delay: 1.2s;
+}
+
+@keyframes float-coin {
+
+    0%,
+    100% {
+        transform: translateY(0) rotateX(15deg) rotateY(15deg);
+    }
+
+    50% {
+        transform: translateY(-25px) rotateX(-5deg) rotateY(-10deg);
+    }
+}
+
 /* Showcase Area */
 .showcase-area {
     margin-top: 100px;
@@ -1439,6 +1521,81 @@ body {
 
     .pricing-card.highlight-card {
         transform: scale(1);
+    }
+}
+
+@media (max-width: 768px) {
+    .navbar {
+        padding: 16px 20px;
+    }
+
+    .nav-links {
+        display: none;
+        /* Hide standard links on mobile */
+    }
+
+    .hero {
+        padding-top: 50px;
+    }
+
+    .hero-title {
+        font-size: 2.5rem;
+    }
+
+    .hero-subtitle {
+        font-size: 0.9rem;
+        padding: 0 20px;
+    }
+
+    .crypto-coin {
+        width: 40px;
+        height: 40px;
+    }
+
+    .crypto-coin svg {
+        width: 24px;
+        height: 24px;
+    }
+
+    .coin-usdt {
+        right: 5%;
+        top: 100px;
+    }
+
+    .coin-eth {
+        left: 5%;
+        top: 250px;
+    }
+
+    .coin-sol {
+        right: 10%;
+        top: 350px;
+    }
+
+    .coin-usdc {
+        right: auto;
+        left: 10%;
+        top: 120px;
+    }
+
+    .tag-floating {
+        position: relative;
+        display: inline-block;
+        top: auto !important;
+        left: auto !important;
+        right: auto !important;
+        margin: 10px;
+        transform: none !important;
+    }
+
+    .hero-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .showcase-area {
+        margin-top: 50px;
     }
 }
 

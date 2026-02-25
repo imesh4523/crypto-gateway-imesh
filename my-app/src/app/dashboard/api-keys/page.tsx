@@ -1,20 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Copy, Plus, Key, EyeOff, Eye, ShieldCheck, Trash2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 
-const initialApiKeys = [
-    { id: "key_1a2b", name: "Production Key", prefix: "sk_live_8f92a1...", created: "2026-02-15", lastUsed: "2 mins ago", active: true },
-    { id: "key_3c4d", name: "Development Key", prefix: "sk_live_3b21c4...", created: "2026-02-10", lastUsed: "5 days ago", active: true },
-];
-
 export default function ApiKeysPage() {
-    const [apiKeys, setApiKeys] = useState(initialApiKeys);
-    const [webhookSecret] = useState("whsec_5f8a0b9c1d2e3f4a5b6c7d8e9f0a1b2c");
+    const [apiKeys, setApiKeys] = useState<any[]>([]);
+    const [webhookSecret, setWebhookSecret] = useState("");
+    const [loading, setLoading] = useState(true);
     const [isWebhookRevealed, setIsWebhookRevealed] = useState(false);
 
     const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -22,6 +18,35 @@ export default function ApiKeysPage() {
     const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
     const [newKeyName, setNewKeyName] = useState("");
     const [newlyGeneratedKey, setNewlyGeneratedKey] = useState<string | null>(null);
+    const [generating, setGenerating] = useState(false);
+
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    const fetchData = async () => {
+        try {
+            const [keysRes, webhookRes] = await Promise.all([
+                fetch('/api/v1/keys'),
+                fetch('/api/v1/dashboard/webhook-settings')
+            ]);
+
+            const keysData = await keysRes.json();
+            const webhookData = await webhookRes.json();
+
+            if (keysData.data) setApiKeys(keysData.data);
+
+            if (webhookData.success) {
+                setWebhookSecret(webhookData.data.webhookSecret);
+            } else if (webhookData.error === 'DATABASE_MIGRATION_REQUIRED' || webhookData.webhookSecret === 'ACCOUNT_NOT_FOUND') {
+                console.warn("Account mismatch after migration. Please re-register.");
+            }
+        } catch (error) {
+            console.error("Failed to fetch data", error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleCopy = (text: string, id: string) => {
         navigator.clipboard.writeText(text);
@@ -29,29 +54,44 @@ export default function ApiKeysPage() {
         setTimeout(() => setCopiedId(null), 2000);
     };
 
-    const handleGenerateKey = () => {
+    const handleGenerateKey = async () => {
         if (!newKeyName.trim()) return;
+        setGenerating(true);
 
-        const randomHex = Math.random().toString(16).substring(2, 10) + Math.random().toString(16).substring(2, 10);
-        const fullKey = `sk_live_${randomHex}`;
-        const prefix = `sk_live_${randomHex.substring(0, 6)}...`;
+        try {
+            const res = await fetch('/api/v1/keys', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: newKeyName })
+            });
 
-        const newKey = {
-            id: `key_${Math.random().toString(36).substring(2, 6)}`,
-            name: newKeyName,
-            prefix: prefix,
-            created: new Date().toISOString().split('T')[0],
-            lastUsed: "Never",
-            active: true
-        };
-
-        setApiKeys([newKey, ...apiKeys]);
-        setNewlyGeneratedKey(fullKey);
+            const data = await res.json();
+            if (data.success) {
+                setNewlyGeneratedKey(data.data.key);
+                setApiKeys([data.data, ...apiKeys]);
+            } else {
+                alert("Error: " + data.error);
+            }
+        } catch (error) {
+            alert("Failed to generate key");
+        } finally {
+            setGenerating(false);
+        }
     };
 
-    const handleRevoke = (id: string) => {
+    const handleRevoke = async (id: string) => {
         if (confirm("Are you sure you want to revoke this API Key? It will stop working immediately.")) {
-            setApiKeys(apiKeys.filter(key => key.id !== id));
+            try {
+                const res = await fetch(`/api/v1/keys?id=${id}`, { method: 'DELETE' });
+                const data = await res.json();
+                if (data.success) {
+                    setApiKeys(apiKeys.filter(key => key.id !== id));
+                } else {
+                    alert("Error: " + data.error);
+                }
+            } catch (error) {
+                alert("Failed to revoke key.");
+            }
         }
     };
 
@@ -60,6 +100,8 @@ export default function ApiKeysPage() {
         setNewKeyName("");
         setNewlyGeneratedKey(null);
     };
+
+    if (loading) return <div className="text-white p-8 animate-pulse text-center">Loading Keys...</div>;
 
     return (
         <div className="space-y-8">

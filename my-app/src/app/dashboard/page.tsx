@@ -1,16 +1,67 @@
-"use client";
-
 import { Card } from "@/components/ui/card";
 import { ArrowUpRight, ArrowDownRight, Wallet, Activity, CheckCircle2, Clock } from "lucide-react";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { prisma } from "@/lib/prisma";
+import { redirect } from "next/navigation";
+import OverviewCharts from "@/components/dashboard/OverviewCharts";
+import Link from "next/link";
 
-const mockTransactions = [
-    { id: "platform_189201a", date: "2026-02-24 10:23 AM", amount: "500.00", currency: "USDT", status: "SUCCESS" },
-    { id: "platform_189201b", date: "2026-02-24 09:12 AM", amount: "150.00", currency: "USDT", status: "SUCCESS" },
-    { id: "platform_189201c", date: "2026-02-23 04:45 PM", amount: "3200.00", currency: "USDC", status: "PENDING" },
-    { id: "platform_189201d", date: "2026-02-23 11:20 AM", amount: "45.00", currency: "BTC", status: "SUCCESS" },
-];
+const getStatusBadge = (status: string) => {
+    switch (status) {
+        case "SUCCESS":
+        case "COMPLETED":
+        case "FINISHED":
+            return (
+                <span className="text-[13px] font-medium text-emerald-500">
+                    Finished
+                </span>
+            );
+        case "CONFIRMED":
+            return (
+                <span className="text-[13px] font-medium text-emerald-500">
+                    Confirmed
+                </span>
+            );
+        case "PENDING":
+        case "WAITING":
+            return (
+                <span className="text-[13px] font-medium text-amber-500">
+                    Waiting
+                </span>
+            );
+        case "EXPIRED":
+        case "FAILED":
+            return (
+                <span className="text-[13px] font-medium text-rose-500">
+                    {status === "FAILED" ? "Failed" : "Expired"}
+                </span>
+            );
+        default:
+            return <span className="text-[13px] font-medium text-slate-400">{status}</span>;
+    }
+};
 
-export default function DashboardOverview() {
+export default async function DashboardOverview() {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user) {
+        redirect("/login");
+    }
+
+    const userId = (session.user as any).id;
+    const user = await prisma.user.findUnique({
+        where: { id: userId },
+    });
+
+    if (!user) {
+        redirect("/login");
+    }
+
+    const recentTransactions = await prisma.transaction.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        take: 5,
+    });
     return (
         <div className="space-y-8">
             <div>
@@ -67,45 +118,72 @@ export default function DashboardOverview() {
                 </Card>
             </div>
 
-            <div className="bg-white/5 border border-white/10 backdrop-blur-xl rounded-2xl overflow-hidden">
-                <div className="p-6 border-b border-white/10 flex items-center justify-between">
+            <OverviewCharts />
+
+            <div className="bg-white/5 border border-white/10 backdrop-blur-xl rounded-2xl overflow-hidden flex flex-col">
+                <div className="p-6 border-b border-white/10 flex items-center justify-between gap-4">
                     <h2 className="text-xl font-bold text-white">Recent Transactions</h2>
-                    <button className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors">View All</button>
+                    <Link href="/dashboard/transactions" className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors">View All</Link>
                 </div>
                 <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left">
-                        <thead className="text-xs text-slate-400 uppercase bg-black/20">
+                    <table className="w-full text-left whitespace-nowrap">
+                        <thead className="text-[13px] text-slate-400 font-medium bg-transparent border-b border-white/5">
                             <tr>
-                                <th className="px-6 py-4 font-medium">Platform TxID</th>
-                                <th className="px-6 py-4 font-medium">Date & Time</th>
-                                <th className="px-6 py-4 font-medium text-right">Amount</th>
-                                <th className="px-6 py-4 font-medium">Status</th>
+                                <th className="px-6 py-4 text-left font-medium">Payment ID</th>
+                                <th className="px-6 py-4 text-left font-medium">Order ID</th>
+                                <th className="px-6 py-4 text-left font-medium">Original price</th>
+                                <th className="px-6 py-4 text-left font-medium">Amount sent / received</th>
+                                <th className="px-6 py-4 text-left font-medium">Status</th>
+                                <th className="px-6 py-4 text-left font-medium">Created / Last update</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-white/5">
-                            {mockTransactions.map((tx) => (
-                                <tr key={tx.id} className="hover:bg-white/[0.02] transition-colors">
-                                    <td className="px-6 py-4 text-slate-300 font-mono text-xs">{tx.id}</td>
-                                    <td className="px-6 py-4 text-slate-400">{tx.date}</td>
-                                    <td className="px-6 py-4 text-right">
-                                        <span className="font-medium text-white">{tx.amount}</span>{" "}
-                                        <span className="text-slate-500">{tx.currency}</span>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        {tx.status === "SUCCESS" ? (
-                                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                                                <CheckCircle2 className="w-3 h-3 mr-1" />
-                                                Success
-                                            </span>
-                                        ) : (
-                                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                                                <Clock className="w-3 h-3 mr-1" />
-                                                Pending
-                                            </span>
-                                        )}
+                        <tbody className="divide-y divide-white/[0.03]">
+                            {recentTransactions.length === 0 ? (
+                                <tr>
+                                    <td colSpan={6} className="px-6 py-16 text-center text-slate-500">
+                                        <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 border border-white/10">
+                                            <Wallet className="w-8 h-8 text-slate-400" />
+                                        </div>
+                                        <p className="font-medium text-slate-300">No transactions found</p>
+                                        <p className="text-sm mt-1">Recent transactions will appear here.</p>
                                     </td>
                                 </tr>
-                            ))}
+                            ) : (
+                                recentTransactions.map((tx) => (
+                                    <tr key={tx.id} className="group hover:bg-white/[0.02] transition-all cursor-pointer">
+                                        <td className="px-6 py-4">
+                                            <span className="font-mono text-[13px] text-slate-300 group-hover:text-indigo-400 transition-colors" title={tx.providerTxId || "Pending"}>
+                                                {tx.providerTxId || "Pending"}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className="font-mono text-[13px] text-slate-300" title={tx.id}>
+                                                {tx.id}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="text-[13px] font-medium text-slate-300">
+                                                {tx.amount.toString()} {tx.currency === 'USD' ? 'USD' : (tx.currency || 'USD')}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex flex-col gap-1 text-[13px] text-slate-300">
+                                                <span className="font-medium">{tx.payAmount ? tx.payAmount.toString() : tx.amount.toString()} {tx.payCurrency || tx.currency}</span>
+                                                <span className="text-slate-500">{tx.status === 'SUCCESS' ? (tx.payAmount ? tx.payAmount.toString() : tx.amount.toString()) : '0'} {tx.payCurrency || tx.currency}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            {getStatusBadge(tx.status)}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex flex-col gap-1 text-[13px] text-slate-400">
+                                                <span>{new Date(tx.createdAt).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}</span>
+                                                <span>{new Date(tx.updatedAt).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
                     </table>
                 </div>

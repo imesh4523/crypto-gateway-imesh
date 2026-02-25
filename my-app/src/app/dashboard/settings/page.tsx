@@ -3,15 +3,32 @@ import { User, Shield, Lock, MapPin, Globe, Clock, History } from "lucide-react"
 import { Button } from "@/components/ui/button";
 import { ProfileSettings } from "@/components/dashboard/ProfileSettings";
 import { TwoFactorSettings } from "@/components/dashboard/TwoFactorSettings";
-const mockLoginHistory = [
-    { id: "1", ipAddress: "192.168.1.105", location: "Colombo, Sri Lanka", userAgent: "Chrome on Windows", createdAt: new Date("2026-02-24T06:15:00Z"), status: "SUCCESS" },
-    { id: "2", ipAddress: "175.157.x.x", location: "Kandy, Sri Lanka", userAgent: "Safari on iOS", createdAt: new Date("2026-02-23T21:40:00Z"), status: "SUCCESS" },
-    { id: "3", ipAddress: "103.111.x.x", location: "Unknown", userAgent: "Python Requests", createdAt: new Date("2026-02-20T23:20:00Z"), status: "FAILED_PASSWORD" },
-];
+import { WebhookSettings } from "@/components/dashboard/WebhookSettings";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { prisma } from "@/lib/prisma";
+import { redirect } from "next/navigation";
 
 export default async function SettingsPage() {
-    const user = { email: "merchant@example.com", role: "Merchant" };
-    const loginHistory = mockLoginHistory;
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user) {
+        redirect("/login");
+    }
+
+    const userId = (session.user as any).id;
+    const user = await prisma.user.findUnique({
+        where: { id: userId },
+    });
+
+    if (!user) {
+        redirect("/login");
+    }
+
+    const loginHistory = await prisma.loginHistory.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        take: 10,
+    });
 
     return (
         <div className="space-y-8">
@@ -23,9 +40,10 @@ export default async function SettingsPage() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Left Column - Profile & 2FA */}
+                {/* Left Column - Profile, Webhook & 2FA */}
                 <div className="lg:col-span-1 space-y-6">
                     <ProfileSettings email={user?.email || "merchant@example.com"} role={user?.role || "Merchant"} />
+                    <WebhookSettings />
                     <TwoFactorSettings initiallyEnabled={false} />
                 </div>
 
@@ -60,7 +78,7 @@ export default async function SettingsPage() {
                                                 </td>
                                             </tr>
                                         ) : null}
-                                        {loginHistory.map((log) => (
+                                        {loginHistory.map((log: any) => (
                                             <tr key={log.id} className="hover:bg-white/[0.02]">
                                                 <td className="px-4 py-3">
                                                     {log.status === "SUCCESS" ? (

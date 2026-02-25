@@ -40,8 +40,8 @@ export async function POST(req: Request) {
         const { password: _, ...userSafe } = newUser;
 
         return NextResponse.json({ success: true, data: userSafe }, { status: 201 });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Registration error:', error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
     }
 }
