@@ -16,8 +16,8 @@ const sidebarLinks = [
     { name: "Transactions", href: "/dashboard/transactions", icon: ReceiptText },
     { name: "Checkout Widget", href: "/dashboard/customizer", icon: Palette },
     { name: "API Keys", href: "/dashboard/api-keys", icon: KeyRound },
-    { name: "Integrations", href: "/integrations", icon: Puzzle },
     { name: "Withdrawals", href: "/dashboard/withdrawals", icon: ArrowRightLeft },
+    { name: "Telegram Bot", href: "/dashboard/bot", icon: Puzzle },
     { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 

@@ -15,7 +15,7 @@ export async function GET(req: Request) {
 
         // Using raw SQL to bypass outdated Prisma client dmmf
         const users: any[] = await prisma.$queryRawUnsafe(
-            `SELECT "brandName", "brandLogoUrl", "themeBgColor", "themeCardColor" FROM "User" WHERE "id" = $1`,
+            `SELECT "brandName", "brandLogoUrl", "themeBgColor", "themeCardColor", "enabledCryptoWallet", "enabledBinancePay" FROM "User" WHERE "id" = $1`,
             userId
         );
 
@@ -37,15 +37,17 @@ export async function POST(req: Request) {
         const userId = (session.user as any).id;
         fs.appendFileSync('debug-settings.log', `[${new Date().toISOString()}] Body: ${JSON.stringify(body)}, User: ${userId}\n`);
 
-        const { brandName, brandLogoUrl, themeBgColor, themeCardColor } = body;
+        const { brandName, brandLogoUrl, themeBgColor, themeCardColor, enabledCryptoWallet, enabledBinancePay } = body;
 
         // Use Raw SQL update to bypass "Unknown argument" error from outdated Prisma client
         await prisma.$executeRawUnsafe(
-            `UPDATE "User" SET "brandName" = $1, "brandLogoUrl" = $2, "themeBgColor" = $3, "themeCardColor" = $4 WHERE "id" = $5`,
+            `UPDATE "User" SET "brandName" = $1, "brandLogoUrl" = $2, "themeBgColor" = $3, "themeCardColor" = $4, "enabledCryptoWallet" = $5, "enabledBinancePay" = $6 WHERE "id" = $7`,
             brandName,
             brandLogoUrl,
             themeBgColor,
             themeCardColor,
+            enabledCryptoWallet,
+            enabledBinancePay,
             userId
         );
 
@@ -58,6 +60,8 @@ export async function POST(req: Request) {
                 brandLogoUrl,
                 themeBgColor,
                 themeCardColor,
+                enabledCryptoWallet,
+                enabledBinancePay
             }
         });
     } catch (error: any) {

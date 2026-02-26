@@ -15,11 +15,18 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             return NextResponse.json({ error: 'Invoice not found or not in test mode' }, { status: 404 });
         }
 
-        // 1. Update Invoice status
-        await prisma.invoice.update({
-            where: { id: invoiceId },
+        // 1. Update Invoice status atomically
+        const updatedInvoices = await prisma.invoice.updateMany({
+            where: {
+                id: invoiceId,
+                status: { not: 'COMPLETED' }
+            },
             data: { status: 'COMPLETED' }
         });
+
+        if (updatedInvoices.count === 0) {
+            return NextResponse.json({ error: 'Invoice already completed concurrently' }, { status: 400 });
+        }
 
         // 2. Update Transaction status
         if (invoice.transaction) {
@@ -28,13 +35,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
                 data: { status: 'SUCCESS' }
             });
 
-            // 3. Add to merchant test balance
-            await prisma.user.update({
-                where: { id: invoice.userId },
-                data: {
-                    testBalance: { increment: invoice.transaction.amountMerchant }
-                }
-            });
+            // Test mode simulation should not increment real merchant balance.
+            // Balance logic removed entirely for simulated test transactions.
         }
 
         return NextResponse.json({ success: true });

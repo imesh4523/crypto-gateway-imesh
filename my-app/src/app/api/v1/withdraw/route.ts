@@ -20,26 +20,22 @@ export async function POST(req: Request) {
 
         // Run as a transaction to prevent race conditions when checking balance
         const result = await prisma.$transaction(async (tx: any) => {
-            const user = await tx.user.findUnique({ where: { id: userId } });
-
-            if (!user) {
-                throw new Error('User not found');
-            }
-
-            if (Number(user.availableBalance) < Number(amount)) {
-                throw new Error('Insufficient balance');
-            }
-
-            // Deduct from available balance and move to pending balance? 
-            // Better to simply deduct from available.
-            await tx.user.update({
-                where: { id: userId },
+            // SECURITY ENHANCEMENT: Atomic Update to prevent Race Conditions
+            // If multiple requests hit exactly at the same time, earlier logic would read
+            // the same balance before deducting. This enforce DB-level atomic conditions.
+            const updatedUsers = await tx.user.updateMany({
+                where: {
+                    id: userId,
+                    availableBalance: { gte: amount }
+                },
                 data: {
-                    availableBalance: {
-                        decrement: amount
-                    }
+                    availableBalance: { decrement: amount }
                 }
             });
+
+            if (updatedUsers.count === 0) {
+                throw new Error('Insufficient balance or user not found');
+            }
 
             // Create the withdrawal request
             const withdrawal = await tx.withdrawal.create({

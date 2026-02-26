@@ -30,13 +30,11 @@ export async function POST(req: Request) {
         const body = await req.json();
 
         // 1. Verify the webhook payload comes from our authentic provider
-        // In production, uncomment the following check:
-        /*
+        // STRICT SECURITY: We MUST verify signature to prevent fake balance updates
         if (!verifySignature(body, signature)) {
-          console.error('Invalid Webhook Signature');
-          return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+            console.error('CRITICAL: Invalid Webhook Signature Detected! Possible Attack.');
+            return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
         }
-        */
 
         const { payment_id, payment_status, actually_paid, pay_currency } = body;
 
@@ -62,28 +60,54 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Transaction not found or already processed' }, { status: 404 });
         }
 
-        // 3. Update the Transaction Status
-        // Decide status based on NowPayments status
+        // 3. Update the Transaction Status Atomically
         const resolvedStatus = payment_status === 'partially_paid' ? 'SUCCESS' : 'SUCCESS';
-        // Note: For partial payments, actual received amount should be logged. We'll mark as SUCCESS for simplicity, 
-        // but with the exact amount settled if needed. 
 
-        // Ensure we don't double credit
-        if (transaction.status === 'SUCCESS') {
-            return NextResponse.json({ success: true, message: 'Already processed' });
-        }
-
-        const updatedTransaction = await prisma.transaction.update({
-            where: { id: transaction.id },
+        // SECURITY ENHANCEMENT: Atomic Update to prevent Race Conditions 
+        // If webhooks are duplicated/retried and hit at the exact same millisecond, 
+        // they both read 'PENDING'. This atomic update ensures ONLY ONE request 
+        // can change the status from PENDING to SUCCESS.
+        const updatedTransactions = await prisma.transaction.updateMany({
+            where: {
+                id: transaction.id,
+                status: 'PENDING'
+            },
             data: { status: resolvedStatus },
         });
 
-        // Also update the linked invoice 
+        if (updatedTransactions.count === 0) {
+            // Already processed by another concurrent request
+            return NextResponse.json({ success: true, message: 'Already processed concurrently' });
+        }
+
+        // We know we are the ONE request that transitioned it. Now safely update balances.
+
+        // Update the linked invoice 
         if (transaction.invoiceId) {
-            await prisma.invoice.update({
+            const invoice = await prisma.invoice.update({
                 where: { id: transaction.invoiceId },
                 data: { status: 'COMPLETED' }
             });
+
+            // Auto-fulfill Bot Payments
+            if (invoice.orderId && invoice.orderDescription?.startsWith("Bot Deposit")) {
+                // @ts-ignore
+                const botPayment = await prisma.botPayment.update({
+                    where: { id: invoice.orderId },
+                    data: { status: "completed" },
+                    include: { customer: true }
+                });
+
+                if (botPayment) {
+                    // @ts-ignore
+                    await prisma.botCustomer.update({
+                        where: { id: botPayment.customerId },
+                        data: {
+                            balance: { increment: botPayment.amount }
+                        }
+                    });
+                }
+            }
         }
 
         // 4. Update the Merchant's Balance
@@ -108,11 +132,11 @@ export async function POST(req: Request) {
                 const merchantPayload = {
                     event: 'payment.success',
                     payment: {
-                        platformTxId: updatedTransaction.platformTxId,
-                        status: updatedTransaction.status,
-                        amount: updatedTransaction.amount.toString(),
-                        currency: updatedTransaction.currency,
-                        netSettled: updatedTransaction.amountMerchant.toString(),
+                        platformTxId: transaction.platformTxId,
+                        status: resolvedStatus,
+                        amount: transaction.amount.toString(),
+                        currency: transaction.currency,
+                        netSettled: transaction.amountMerchant.toString(),
                         paidCurrency: pay_currency,
                         paidCryptoAmount: actually_paid,
                     }

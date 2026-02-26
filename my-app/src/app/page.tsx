@@ -6,6 +6,7 @@ import { AnimatedDonut } from './components/AnimatedDonut';
 import { LiveVerification } from './components/LiveVerification';
 import { AnimatedBarChart } from './components/AnimatedBarChart';
 import { FloatingCryptoIcons } from './components/FloatingCryptoIcons';
+import { PaymentPreview } from './components/PaymentPreview';
 
 export default function Home() {
     return (
@@ -165,6 +166,33 @@ export default function Home() {
                     </div>
                 </div>
 
+                <section className="transfer-section">
+                    <div className="transfer-container" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', alignItems: 'center', gap: '80px' }}>
+                        <div className="preview-side">
+                            <PaymentPreview />
+                        </div>
+
+                        <div className="content-side">
+                            <h2 className="transfer-title" style={{ color: '#fff', fontSize: '3rem', fontWeight: '950', lineHeight: 1.1, marginBottom: '20px', letterSpacing: '-0.02em' }}>
+                                Easily transfer money <br />across borders in <br />seconds, not days.
+                            </h2>
+                            <p className="transfer-desc" style={{ color: 'rgba(255,255,255,0.7)', fontSize: '1.1rem', marginBottom: '30px', maxWidth: '440px' }}>
+                                Experience the real feeling of instant crypto payments. Our gateway handles the complexity so you can focus on your business.
+                            </p>
+
+                            <div className="feature-badges" style={{ display: 'flex', gap: '15px', marginBottom: '40px' }}>
+                                <div className="badge" style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', padding: '8px 16px', borderRadius: '100px', fontSize: '0.8rem', fontWeight: '700', border: '1px solid rgba(255,255,255,0.1)' }}>⚡ Instant Settlement</div>
+                                <div className="badge" style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', padding: '8px 16px', borderRadius: '100px', fontSize: '0.8rem', fontWeight: '700', border: '1px solid rgba(255,255,255,0.1)' }}>🛡️ Zero Fraud</div>
+                            </div>
+
+                            <Link href="/register" className="transfer-btn" style={{ background: '#fff', color: '#000', padding: '16px 32px', borderRadius: '100px', display: 'inline-flex', alignItems: 'center', gap: '12px', fontWeight: '800', textDecoration: 'none', transition: 'all 0.3s' }}>
+                                Get Started Now
+                                <div className="arrow-circ" style={{ background: '#000', color: '#fff', width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px' }}>↗</div>
+                            </Link>
+                        </div>
+                    </div>
+                </section>
+
 
                 <section id="features" className="feature-section left-image pt-100">
                     <div className="feature-image-container perspective-container">
@@ -241,63 +269,6 @@ export default function Home() {
                     </div>
                 </section>
 
-
-                <section className="feature-section right-image pt-100">
-                    <div className="feature-content">
-                        <h2 className="feature-title">Easily transfer money across borders and reach anyone, anywhere in the world
-                            in minutes.</h2>
-                        <p className="feature-desc">Lorem ipsum dolor sit amet consectetur Molestie ullamcorper elit non diam at
-                            pharetra integer non fringilla Non cras</p>
-
-                        <button className="btn-primary mt-20">Start free trial <span className="arrow-up-right">↗</span></button>
-
-                        <div className="rating-box mt-40">
-                            <div className="avatars">
-                                <div className="avatar av-1"></div>
-                                <div className="avatar av-2"></div>
-                                <div className="avatar av-3"></div>
-                            </div>
-                            <div className="rating-text">
-                                <div className="stars">★★★★★</div>
-                                <p>Rated 4.9/5 from over 600 review</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="feature-image-container perspective-container">
-                        <div className="glass-panel transfer-form light-theme">
-                            <h3>Bank transfer</h3>
-
-                            <div className="form-group mt-20">
-                                <label>Select Destination Country</label>
-                                <div className="input-box select-box">Location <span className="arrow-down-small">▾</span></div>
-                            </div>
-
-                            <div className="form-group">
-                                <label>You Send</label>
-                                <div className="input-box split-box">
-                                    <span className="val-text">11,400,349</span>
-                                    <span className="currency">USD</span>
-                                </div>
-                            </div>
-
-                            <div className="transfer-details">
-                                <div className="detail-row"><span>Rate</span><span>11,400,349</span></div>
-                                <div className="detail-row"><span>Fee</span><span>USD 100,000</span></div>
-                            </div>
-
-                            <div className="form-group">
-                                <label>Recipient Gets Exactly</label>
-                                <div className="input-box split-box gray-bg">
-                                    <span className="val-text">1,000</span>
-                                    <span className="currency">USD</span>
-                                </div>
-                            </div>
-
-                            <button className="btn-primary full-width mt-20 black-btn">Send now</button>
-                        </div>
-                    </div>
-                </section>
 
 
                 <section className="feature-section center-aligned pt-100">

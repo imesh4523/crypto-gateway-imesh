@@ -344,6 +344,115 @@ body {
     margin-top: 4px;
 }
 
+/* Crypto 3D Floating Icons */
+.crypto-icon-float {
+    z-index: 20;
+}
+
+.binance-float {
+    top: 5%;
+    left: 28%;
+    animation: float-3d-1 6s ease-in-out infinite;
+}
+
+.usdt-float {
+    bottom: 30%;
+    right: 32%;
+    animation: float-3d-2 7s ease-in-out infinite alternate;
+}
+
+.btc-float {
+    top: 25%;
+    right: 5%;
+    animation: float-3d-3 8s ease-in-out infinite alternate-reverse;
+}
+
+.crypto-coin {
+    width: 65px;
+    height: 65px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    transition: transform 0.3s ease;
+}
+
+.crypto-coin img {
+    width: 55%;
+    height: 55%;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.4));
+}
+
+.binance-coin {
+    background: linear-gradient(135deg, rgba(240, 185, 11, 0.8), rgba(199, 152, 5, 0.4));
+    box-shadow:
+        inset 0 0 15px rgba(255, 255, 255, 0.4),
+        0 15px 35px rgba(240, 185, 11, 0.3),
+        0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.usdt-coin {
+    background: linear-gradient(135deg, rgba(38, 161, 123, 0.8), rgba(26, 122, 92, 0.4));
+    box-shadow:
+        inset 0 0 15px rgba(255, 255, 255, 0.4),
+        0 15px 35px rgba(38, 161, 123, 0.3),
+        0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.btc-coin {
+    background: linear-gradient(135deg, rgba(247, 147, 26, 0.8), rgba(196, 114, 14, 0.4));
+    box-shadow:
+        inset 0 0 15px rgba(255, 255, 255, 0.4),
+        0 15px 35px rgba(247, 147, 26, 0.3),
+        0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+@keyframes float-3d-1 {
+    0% {
+        transform: translateY(0px) rotateX(15deg) rotateY(-15deg);
+    }
+
+    50% {
+        transform: translateY(-20px) rotateX(25deg) rotateY(-5deg);
+    }
+
+    100% {
+        transform: translateY(0px) rotateX(15deg) rotateY(-15deg);
+    }
+}
+
+@keyframes float-3d-2 {
+    0% {
+        transform: translateY(0px) rotateX(-15deg) rotateY(15deg) scale(1.1);
+    }
+
+    50% {
+        transform: translateY(-25px) rotateX(-5deg) rotateY(25deg) scale(1.05);
+    }
+
+    100% {
+        transform: translateY(0px) rotateX(-15deg) rotateY(15deg) scale(1.1);
+    }
+}
+
+@keyframes float-3d-3 {
+    0% {
+        transform: translateY(0px) rotateX(20deg) rotateY(20deg) scale(0.9);
+    }
+
+    50% {
+        transform: translateY(20px) rotateX(10deg) rotateY(10deg) scale(0.85);
+    }
+
+    100% {
+        transform: translateY(0px) rotateX(20deg) rotateY(20deg) scale(0.9);
+    }
+}
+
 /* Mini Alert */
 .mini-alert {
     padding: 16px 24px;
@@ -1438,5 +1547,159 @@ body {
 
     .pricing-card.highlight-card {
         transform: scale(1);
+    }
+}
+
+/* Mobile Devices */
+@media (max-width: 768px) {
+    .hero {
+        padding-top: 40px;
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    .hero-title {
+        font-size: 2.5rem;
+    }
+
+    .hero-subtitle {
+        font-size: 0.9rem;
+        padding: 0 10px;
+    }
+
+    .navbar {
+        padding: 16px 20px;
+    }
+
+    .nav-links {
+        display: none;
+    }
+
+    .nav-right .btn-primary {
+        padding: 10px 16px;
+        font-size: 0.85rem;
+    }
+
+    .center-card,
+    .transfer-form,
+    .chart-panel,
+    .reward-card,
+    .phone-mockup {
+        width: 100% !important;
+        max-width: 320px;
+        box-sizing: border-box;
+    }
+
+    .bento-card {
+        padding: 24px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .bento-value {
+        font-size: 1.8rem;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .donut-center h3 {
+        font-size: 1.6rem;
+    }
+
+    .donut-chart-box {
+        width: 160px;
+        height: 160px;
+    }
+
+    .donut-center {
+        width: 110px;
+        height: 110px;
+    }
+
+    .purple-gradient {
+        width: 100%;
+        max-width: 250px;
+    }
+
+    .feature-title {
+        font-size: 2rem;
+    }
+
+    .plan-price {
+        font-size: 2.5rem;
+    }
+
+    .footer {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    .mt-100 {
+        margin-top: 50px;
+    }
+
+    .mt-60 {
+        margin-top: 30px;
+    }
+
+    .pt-100 {
+        padding-top: 50px;
+    }
+
+    .showcase-area {
+        margin-top: 50px;
+        padding: 0 20px;
+    }
+
+    .crypto-coin {
+        width: 50px;
+        height: 50px;
+    }
+
+    .stat-box {
+        min-width: unset;
+        width: 100%;
+        max-width: 320px;
+        box-sizing: border-box;
+    }
+
+    .stat-value {
+        font-size: 1.4rem;
+    }
+
+    .stat-value-large {
+        font-size: 1.8rem;
+    }
+
+    .dual-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .dark-bg-block {
+        padding: 40px 20px;
+    }
+
+    .bar-chart-container {
+        height: 150px;
+    }
+
+    .pricing-card {
+        padding: 30px 20px;
+    }
+
+    .feature-section {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    .logo-row {
+        gap: 20px;
+    }
+
+    .partner-logo {
+        font-size: 1rem;
     }
 }

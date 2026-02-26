@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import QRCode from 'qrcode';
 import {
@@ -169,6 +169,23 @@ export default function CheckoutPage() {
     const [payCurrency, setPayCurrency] = useState('USDTTRC20');
     const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
     const [status, setStatus] = useState('FETCHING');
+    const statusRef = useRef(status);
+    // Keep ref in sync with state
+    useEffect(() => { statusRef.current = status; }, [status]);
+
+    // Payment method: 'crypto' = NowPayments, 'binance' = Binance Pay ID
+    const [paymentMethod, setPaymentMethod] = useState<'crypto' | 'binance'>('crypto');
+
+    // Binance Pay states
+    const [binancePayId, setBinancePayId] = useState('');
+    const [binanceNote, setBinanceNote] = useState('');
+    const [binanceAmount, setBinanceAmount] = useState<number | null>(null);
+    const [binanceQrUrl, setBinanceQrUrl] = useState('');
+    const [verifying, setVerifying] = useState(false);
+    const [verifyMessage, setVerifyMessage] = useState('');
+    const [verifyError, setVerifyError] = useState('');
+    const [copiedNote, setCopiedNote] = useState(false);
+    const [copiedBinanceId, setCopiedBinanceId] = useState(false);
 
     // Multi-step selection states
     const [selectedCoin, setSelectedCoin] = useState('USDT');
@@ -180,13 +197,15 @@ export default function CheckoutPage() {
     const [selectedLanguage, setSelectedLanguage] = useState('English');
 
     // UI states
-    const [timeLeft, setTimeLeft] = useState(21600); // 6 hours
+    const [timeLeft, setTimeLeft] = useState(0);
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
     const [copiedAmount, setCopiedAmount] = useState(false);
     const [copiedAddress, setCopiedAddress] = useState(false);
     const [customerEmail, setCustomerEmail] = useState('');
     const [showEmailInput, setShowEmailInput] = useState(false);
     const [emailSaving, setEmailSaving] = useState(false);
     const [emailSaved, setEmailSaved] = useState(false);
+    const hasSetDefaultMethod = useRef(false);
 
     const t = (key: string) => {
         return (TRANSLATIONS[selectedLanguage] || TRANSLATIONS['English'])[key] || TRANSLATIONS['English'][key];
@@ -195,14 +214,21 @@ export default function CheckoutPage() {
     useEffect(() => {
         if (!invoiceId) return;
         fetchInvoice();
-        const interval = setInterval(fetchInvoice, 5000);
+        const interval = setInterval(fetchInvoice, 3000);
         return () => clearInterval(interval);
     }, [invoiceId]);
 
     useEffect(() => {
-        if (status === 'WAITING' || status === 'SELECT_CRYPTO') {
+        if (status === 'WAITING' || status === 'SELECT_CRYPTO' || status === 'BINANCE_WAITING') {
             const timer = setInterval(() => {
-                setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
+                setTimeLeft((prev) => {
+                    if (prev <= 1) {
+                        clearInterval(timer);
+                        if (status !== 'SELECT_CRYPTO') setStatus('EXPIRED');
+                        return 0;
+                    }
+                    return prev - 1;
+                });
             }, 1000);
             return () => clearInterval(timer);
         }
@@ -217,12 +243,37 @@ export default function CheckoutPage() {
 
     const fetchInvoice = async () => {
         try {
-            const res = await fetch(`/api/checkout/${invoiceId}`);
+            const res = await fetch(`/api/checkout/${invoiceId}?t=${Date.now()}`, { cache: 'no-store' });
             const data = await res.json();
             if (data.success) {
                 setInvoice(data.data);
+
+                // Calculate time left based on expiresAt from server
+                const expiresAt = new Date(data.data.expiresAt).getTime();
+                const now = Date.now();
+                const remaining = Math.max(0, Math.floor((expiresAt - now) / 1000));
+                setTimeLeft(remaining);
+                setIsInitialLoad(false);
+
                 if (data.data.status === 'COMPLETED' || data.data.transaction?.status === 'SUCCESS') {
                     setStatus('PAID');
+                } else if (remaining <= 0) {
+                    setStatus('EXPIRED');
+                } else if (data.data.transaction && data.data.transaction.providerTxId?.startsWith('PAY-')) {
+                    // Binance Pay transaction — preserve BINANCE_WAITING or restore it on reload
+                    const pId = data.data.transaction.payAddress || data.data.merchantBinancePayId || '';
+                    setBinancePayId(pId);
+                    setBinanceNote(data.data.transaction.providerTxId);
+                    setBinanceAmount(Number(data.data.transaction.amount || data.data.amount));
+                    // Generate QR with Binance deep link on restore
+                    if (pId && !binanceQrUrl) {
+                        try {
+                            const binanceDeepLink = `https://app.binance.com/en/usercenter/wallet/payment/send?payId=${encodeURIComponent(pId)}&amount=${data.data.transaction.amount || data.data.amount}&coin=USDT&note=${encodeURIComponent(data.data.transaction.providerTxId)}`;
+                            const qr = await QRCode.toDataURL(binanceDeepLink, { margin: 1, width: 220, color: { dark: '#1E2026', light: '#ffffff' } });
+                            setBinanceQrUrl(qr);
+                        } catch (e) { }
+                    }
+                    setStatus('BINANCE_WAITING');
                 } else if (data.data.transaction && data.data.transaction.payAddress) {
                     setPayAddress(data.data.transaction.payAddress);
                     setPayAmount(data.data.transaction.amount);
@@ -238,6 +289,15 @@ export default function CheckoutPage() {
                     setStatus('WAITING');
                 } else {
                     setStatus('SELECT_CRYPTO');
+                    // Default to crypto if enabled, or binance if only that is enabled
+                    if (!hasSetDefaultMethod.current) {
+                        hasSetDefaultMethod.current = true;
+                        if (data.data.enabledCryptoWallet === false && data.data.enabledBinancePay !== false) {
+                            setPaymentMethod('binance');
+                        } else {
+                            setPaymentMethod('crypto');
+                        }
+                    }
                 }
             } else {
                 setStatus('ERROR');
@@ -279,6 +339,70 @@ export default function CheckoutPage() {
             alert('Failed to generate payment address');
         } finally {
             setGenerating(false);
+        }
+    };
+
+    const handleBinancePay = async () => {
+        setGenerating(true);
+        setVerifyMessage('');
+        setVerifyError('');
+        try {
+            const res = await fetch(`/api/checkout/${invoiceId}/pay-binance`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+            });
+            const data = await res.json();
+            if (data.success) {
+                setBinancePayId(data.data.binancePayId);
+                setBinanceNote(data.data.note);
+                setBinanceAmount(Number(data.data.amount));
+                // Generate QR with Binance Pay deep link
+                try {
+                    const binanceDeepLink = `https://app.binance.com/en/usercenter/wallet/payment/send?payId=${encodeURIComponent(data.data.binancePayId)}&amount=${data.data.amount}&coin=USDT&note=${encodeURIComponent(data.data.note)}`;
+                    const qr = await QRCode.toDataURL(binanceDeepLink, { margin: 1, width: 220, color: { dark: '#1E2026', light: '#ffffff' } });
+                    setBinanceQrUrl(qr);
+                } catch (e) { console.error('QR gen error', e); }
+                setStatus('BINANCE_WAITING');
+            } else {
+                alert('Error: ' + (data.error || 'Failed to init Binance payment'));
+            }
+        } catch (error) {
+            alert('Failed to contact server');
+        } finally {
+            setGenerating(false);
+        }
+    };
+
+    const handleBinanceVerify = async () => {
+        setVerifying(true);
+        setVerifyMessage('');
+        setVerifyError('');
+        try {
+            const res = await fetch('/api/v1/binance/verify-payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ invoiceId }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                setVerifyMessage('✅ Payment verified successfully!');
+                setTimeout(() => setStatus('PAID'), 1500);
+            } else {
+                const errorType = data.error || '';
+                if (errorType === 'api_keys_missing') {
+                    setVerifyError('⚠️ Merchant Binance API keys not configured. Cannot verify automatically.');
+                } else if (errorType === 'invalid_api_key') {
+                    setVerifyError('🔑 Binance API key is invalid or expired. Contact merchant.');
+                } else if (errorType === 'not_found') {
+                    setVerifyError(`Payment not found yet. Make sure you sent exactly ${binanceAmount} USDT with note "${binanceNote}". Wait 1-2 min and try again.`);
+                } else {
+                    setVerifyError(data.message || 'Verification failed. Please try again.');
+                }
+            }
+        } catch (error) {
+            setVerifyError('Network error. Please check your connection and try again.');
+        } finally {
+            setVerifying(false);
         }
     };
 
@@ -363,8 +487,65 @@ export default function CheckoutPage() {
                     )}
                 </div>
 
+                {/* PAYMENT METHOD SELECTOR - shown on SELECT_CRYPTO only */}
+                {status === 'SELECT_CRYPTO' && (invoice?.enabledCryptoWallet !== false || invoice?.enabledBinancePay !== false) && (
+                    <div className="px-8 pt-6 pb-0">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[2px] mb-3">Payment Method</p>
+                        <div className={`grid gap-3 mb-2 ${invoice?.enabledCryptoWallet !== false && invoice?.enabledBinancePay !== false ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                            {/* Crypto option */}
+                            {invoice?.enabledCryptoWallet !== false && (
+                                <button
+                                    onClick={() => setPaymentMethod('crypto')}
+                                    className={`flex items-center gap-3 p-4 rounded-2xl border-2 transition-all duration-200 ${paymentMethod === 'crypto'
+                                        ? 'border-indigo-500 bg-indigo-50 shadow-md shadow-indigo-100'
+                                        : 'border-slate-100 bg-white hover:border-slate-200 hover:shadow-sm'
+                                        }`}
+                                >
+                                    <img src="https://cryptologos.cc/logos/tether-usdt-logo.svg?v=024" className="w-7 h-7" alt="Crypto" />
+                                    <div className="text-left">
+                                        <p className={`font-black text-sm leading-none mb-0.5 ${paymentMethod === 'crypto' ? 'text-indigo-700' : 'text-slate-800'}`}>Crypto</p>
+                                        <p className="text-[10px] text-slate-400 font-medium">BTC, USDT, ETH…</p>
+                                    </div>
+                                    {paymentMethod === 'crypto' && <div className="ml-auto w-5 h-5 bg-indigo-600 rounded-full flex items-center justify-center shrink-0"><Check className="w-3 h-3 text-white stroke-[3px]" /></div>}
+                                </button>
+                            )}
+
+                            {/* Binance Pay option */}
+                            {invoice?.enabledBinancePay !== false && (
+                                <button
+                                    onClick={() => setPaymentMethod('binance')}
+                                    className={`flex items-center gap-3 p-4 rounded-2xl border-2 transition-all duration-200 ${paymentMethod === 'binance'
+                                        ? 'border-[#F0B90B] bg-[#FFFBEB] shadow-md shadow-yellow-100'
+                                        : 'border-slate-100 bg-white hover:border-slate-200 hover:shadow-sm'
+                                        }`}
+                                >
+                                    {/* Binance brand logo */}
+                                    <div className="w-7 h-7 shrink-0 rounded-lg bg-[#F0B90B] flex items-center justify-center shadow-sm">
+                                        <img src="/binance-logo.svg" alt="Binance" className="w-[18px] h-[18px]" />
+                                    </div>
+                                    <div className="text-left">
+                                        <p className={`font-black text-sm leading-none mb-0.5 ${paymentMethod === 'binance' ? 'text-[#B8860B]' : 'text-slate-800'}`}>Binance Pay</p>
+                                        <p className="text-[10px] text-slate-400 font-medium">Pay via ID</p>
+                                    </div>
+                                    {paymentMethod === 'binance' && <div className="ml-auto w-5 h-5 bg-[#F0B90B] rounded-full flex items-center justify-center shrink-0"><Check className="w-3 h-3 text-[#1E2026] stroke-[3px]" /></div>}
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {status === 'SELECT_CRYPTO' && invoice?.enabledCryptoWallet === false && invoice?.enabledBinancePay === false && (
+                    <div className="p-12 text-center">
+                        <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Layers className="w-8 h-8 text-slate-300" />
+                        </div>
+                        <h3 className="text-slate-900 font-black text-lg mb-2">No Payment Methods</h3>
+                        <p className="text-slate-500 text-sm">The merchant has not enabled any payment methods for this checkout.</p>
+                    </div>
+                )}
+
                 {/* SELECT CRYPTO VIEW */}
-                {status === 'SELECT_CRYPTO' && (
+                {status === 'SELECT_CRYPTO' && paymentMethod === 'crypto' && (
                     <div className="p-8">
                         <div className="mb-4">
                             <h2 className="text-[11px] font-black uppercase tracking-[2px] text-slate-400 ml-1">{t('selectPayment')}</h2>
@@ -514,6 +695,214 @@ export default function CheckoutPage() {
                                 t('proceedToPayment')
                             )}
                         </button>
+                    </div>
+                )}
+
+                {/* BINANCE PAY SELECT VIEW */}
+                {status === 'SELECT_CRYPTO' && paymentMethod === 'binance' && (
+                    <div className="p-8 pt-4 animate-in fade-in duration-300">
+                        {/* Binance Brand Hero Card */}
+                        <div className="bg-[#1E2026] rounded-[28px] p-6 mb-5 relative overflow-hidden shadow-2xl shadow-black/20">
+                            {/* Gold glow */}
+                            <div className="absolute -right-8 -top-8 w-36 h-36 bg-[#F0B90B]/20 rounded-full blur-2xl" />
+                            <div className="absolute -left-4 -bottom-4 w-24 h-24 bg-[#F0B90B]/10 rounded-full blur-xl" />
+                            <div className="relative z-10">
+                                <div className="flex items-center gap-4 mb-4">
+                                    {/* Binance brand logo */}
+                                    <div className="w-12 h-12 rounded-2xl bg-[#F0B90B] flex items-center justify-center shadow-lg shadow-yellow-500/20">
+                                        <img src="/binance-logo.svg" alt="Binance" className="w-7 h-7" />
+                                    </div>
+                                    <div>
+                                        <p className="font-black text-white text-lg leading-none tracking-tight">Binance Pay</p>
+                                        <div className="flex items-center gap-1.5 mt-1">
+                                            <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+                                            <p className="text-emerald-400 text-[11px] font-bold">Individual Gateway</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p className="text-slate-400 text-xs leading-relaxed">
+                                    Send the exact amount to the merchant's Binance Pay ID. Include the unique Note in your transfer for automatic verification.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Amount Card */}
+                        <div className="flex items-center justify-between p-5 bg-[#F0B90B]/10 border-2 border-[#F0B90B]/30 rounded-2xl mb-5">
+                            <div>
+                                <p className="text-[10px] text-[#B8860B] font-black uppercase tracking-[3px] mb-1">{t('totalToPay')}</p>
+                                <div className="flex items-baseline gap-2">
+                                    <span className="text-4xl font-black tracking-tighter text-slate-900">{invoice.amount}</span>
+                                    <span className="text-slate-500 font-black text-lg">{invoice.currency}</span>
+                                </div>
+                            </div>
+                            <div className="w-14 h-14 rounded-2xl bg-[#F0B90B] flex items-center justify-center shadow-lg shadow-yellow-400/30">
+                                <img src="/binance-logo.svg" alt="Binance" className="w-9 h-9" />
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={handleBinancePay}
+                            disabled={generating}
+                            className="w-full bg-[#F0B90B] hover:bg-[#e6b000] active:bg-[#d4a000] text-[#1E2026] font-black text-base py-4 px-8 rounded-2xl disabled:opacity-50 transition-all duration-200 shadow-xl shadow-yellow-400/20 flex items-center justify-center gap-3 tracking-wide"
+                        >
+                            {generating ? (
+                                <><Loader2 className="w-5 h-5 animate-spin" /> Getting Pay Details…</>
+                            ) : (
+                                <>
+                                    <img src="/binance-logo.svg" alt="Binance" className="w-5 h-5" />
+                                    Continue with Binance Pay
+                                </>
+                            )}
+                        </button>
+                    </div>
+                )}
+
+                {/* BINANCE WAITING VIEW - Premium Design */}
+                {status === 'BINANCE_WAITING' && (
+                    <div className="animate-in fade-in duration-500">
+                        {/* Amount Header */}
+                        <div className="px-6 pt-6 pb-2 bg-white z-30 relative">
+                            <div className="flex justify-between items-start mb-2">
+                                <div>
+                                    <div className="flex items-center gap-2 mb-0.5">
+                                        <h1 className="text-3xl font-black tracking-tight text-slate-900 tabular-nums">{binanceAmount}</h1>
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="text-lg font-black text-slate-900 underline decoration-[#F0B90B]/40 decoration-3 underline-offset-4">USDT</span>
+                                            <button onClick={() => { navigator.clipboard.writeText(String(binanceAmount)); setCopiedAmount(true); setTimeout(() => setCopiedAmount(false), 2000); }} className="w-7 h-7 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center hover:bg-slate-100 transition active:scale-90">
+                                                {copiedAmount ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <p className="text-xs font-bold text-slate-500 mb-3">{invoice?.amount} {invoice?.currency}</p>
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Gateway •</span>
+                                        <div className="flex items-center gap-1">
+                                            <div className="w-3.5 h-3.5 rounded bg-[#F0B90B] flex items-center justify-center">
+                                                <img src="/binance-logo.svg" alt="" className="w-2.5 h-2.5" />
+                                            </div>
+                                            <span className="text-[10px] font-black text-[#B8860B] uppercase tracking-widest">Binance Pay</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Payment Card */}
+                        <div className="px-6 pb-6 z-20 relative">
+                            <div className="bg-white rounded-[24px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.04)] overflow-hidden">
+                                {/* QR + Pay ID Row */}
+                                <div className="p-5 flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 border-b border-slate-100/60">
+                                    {/* Binance Pay Amount Card (QR not supported by Binance for external generation) */}
+                                    <div className="shrink-0 w-[120px] h-[120px] rounded-2xl bg-[#1E2026] flex flex-col items-center justify-center shadow-lg relative overflow-hidden">
+                                        <div className="absolute -right-4 -top-4 w-16 h-16 bg-[#F0B90B]/15 rounded-full blur-xl" />
+                                        <div className="absolute -left-3 -bottom-3 w-12 h-12 bg-[#F0B90B]/10 rounded-full blur-lg" />
+                                        <div className="relative z-10 flex flex-col items-center">
+                                            <div className="w-10 h-10 rounded-xl bg-[#F0B90B] flex items-center justify-center mb-2 shadow-md shadow-yellow-500/20">
+                                                <img src="/binance-logo.svg" alt="Binance" className="w-6 h-6" />
+                                            </div>
+                                            <p className="text-white font-black text-lg tabular-nums leading-none">{binanceAmount}</p>
+                                            <p className="text-[#F0B90B] text-[10px] font-bold mt-0.5">USDT</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Pay ID Details */}
+                                    <div className="flex-1 text-center sm:text-left flex flex-col justify-center w-full mt-1 sm:mt-0 overflow-hidden">
+                                        <p className="text-xs font-medium text-slate-500 mb-1">Binance Pay ID</p>
+                                        <div className="flex items-center justify-center sm:justify-start gap-2 mb-3 max-w-full">
+                                            <p className="font-mono text-sm font-semibold text-slate-800 truncate">{binancePayId}</p>
+                                            <button onClick={() => { navigator.clipboard.writeText(binancePayId); setCopiedBinanceId(true); setTimeout(() => setCopiedBinanceId(false), 2000); }} className="shrink-0 text-slate-400 hover:text-[#F0B90B] transition-colors active:scale-90 p-0.5">
+                                                {copiedBinanceId ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+                                            </button>
+                                        </div>
+
+                                        {/* Note / Reference - Important! */}
+                                        <div className="bg-[#FFFBEB] border-2 border-[#F0B90B]/30 rounded-xl p-2.5 mb-2">
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <p className="text-[9px] text-[#B8860B] font-black uppercase tracking-widest mb-0.5">⚠ Note (Required!)</p>
+                                                    <p className="font-black text-slate-900 text-base font-mono leading-none">{binanceNote}</p>
+                                                </div>
+                                                <button onClick={() => { navigator.clipboard.writeText(binanceNote); setCopiedNote(true); setTimeout(() => setCopiedNote(false), 2000); }} className="shrink-0 w-7 h-7 bg-white border border-[#F0B90B]/40 rounded-lg flex items-center justify-center hover:bg-[#FFFBEB] transition active:scale-90">
+                                                    {copiedNote ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5 text-[#B8860B]" />}
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <p className="text-[10px] text-slate-400 leading-relaxed">Include the Note when sending via Binance Pay.</p>
+                                    </div>
+                                </div>
+
+                                {/* Status Grid */}
+                                <div className="grid grid-cols-2 divide-x divide-slate-100/60 bg-[#fbfcff]/50">
+                                    {/* Timer */}
+                                    <div className="p-4 flex items-center gap-3">
+                                        <div className="relative w-9 h-9 shrink-0">
+                                            {isInitialLoad ? (
+                                                <div className="w-full h-full rounded-full bg-slate-100 animate-pulse" />
+                                            ) : (
+                                                <div className="w-full h-full animate-[spin_8s_linear_infinite]">
+                                                    <svg className="w-full h-full -rotate-90">
+                                                        <circle cx="18" cy="18" r="16" fill="transparent" stroke="#f1f5f9" strokeWidth="2" />
+                                                        <circle cx="18" cy="18" r="16" fill="transparent" stroke="#F0B90B" strokeWidth="2" strokeDasharray="100.5" strokeDashoffset={100.5 - (100.5 * Math.max(0, timeLeft) / (status === 'BINANCE_WAITING' ? 7200 : 10800))} strokeLinecap="round" className="transition-all duration-1000 ease-linear" />
+                                                    </svg>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <p className="text-[11px] font-medium text-slate-500">Time Left</p>
+                                            <p className="text-[#B8860B] font-bold text-xs tabular-nums">
+                                                {isInitialLoad ? "--:--:--" : formatTime(timeLeft)}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Status Animation */}
+                                    <div className="p-4 flex items-center gap-3">
+                                        <div className="relative w-9 h-9 shrink-0 flex items-center justify-center animate-[spin_3s_linear_infinite]">
+                                            <div className="relative w-6 h-6">
+                                                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-[#F0B90B] rounded-full shadow-[0_0_6px_rgba(240,185,11,0.6)]" />
+                                                <div className="absolute bottom-0 left-0 w-1.5 h-1.5 bg-[#d4a000] rounded-full shadow-[0_0_6px_rgba(212,160,0,0.6)]" />
+                                                <div className="absolute bottom-0 right-0 w-1.5 h-1.5 bg-[#B8860B] rounded-full shadow-[0_0_6px_rgba(184,134,11,0.6)]" />
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <p className="text-[11px] font-medium text-slate-500">Status</p>
+                                            <p className="text-[#B8860B] font-bold text-xs">Awaiting</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Verify Section */}
+                            <div className="mt-4">
+                                {verifyMessage && (
+                                    <div className="mb-3 p-3 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center gap-2.5 animate-in fade-in duration-300">
+                                        <div className="w-8 h-8 bg-emerald-100 rounded-xl flex items-center justify-center shrink-0">
+                                            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                                        </div>
+                                        <p className="text-emerald-700 font-bold text-xs">{verifyMessage}</p>
+                                    </div>
+                                )}
+                                {verifyError && (
+                                    <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-2xl animate-in fade-in duration-300">
+                                        <p className="text-red-700 font-bold text-xs leading-relaxed">{verifyError}</p>
+                                    </div>
+                                )}
+
+                                <button
+                                    onClick={handleBinanceVerify}
+                                    disabled={verifying}
+                                    className="w-full bg-[#F0B90B] hover:bg-[#e6b000] text-[#1E2026] font-black text-xs py-3.5 px-6 rounded-2xl disabled:opacity-60 transition-all duration-200 shadow-lg shadow-yellow-400/20 flex items-center justify-center gap-2 uppercase tracking-wider active:scale-95"
+                                >
+                                    {verifying ? (
+                                        <><Loader2 className="w-4 h-4 animate-spin" /> Checking Binance…</>
+                                    ) : (
+                                        <><CheckCircle2 className="w-4 h-4" /> I've Paid – Verify Now</>
+                                    )}
+                                </button>
+                                <p className="text-center text-[9px] text-slate-400 font-medium mt-2">Reads your Binance Pay history to confirm payment. May take 1–2 min after sending.</p>
+                            </div>
+                        </div>
                     </div>
                 )}
 
@@ -675,10 +1064,12 @@ export default function CheckoutPage() {
 
                                     <div className="p-6 flex items-center justify-center sm:justify-start gap-4">
                                         <div className="relative w-10 h-10 shrink-0">
-                                            <svg className="w-full h-full -rotate-90">
-                                                <circle cx="20" cy="20" r="18" fill="transparent" stroke="#f1f5f9" strokeWidth="2.5" />
-                                                <circle cx="20" cy="20" r="18" fill="transparent" stroke="#10b981" strokeWidth="2.5" strokeDasharray="113" strokeDashoffset={113 - (113 * timeLeft / 21600)} strokeLinecap="round" />
-                                            </svg>
+                                            <div className="w-full h-full animate-[spin_8s_linear_infinite]">
+                                                <svg className="w-full h-full -rotate-90">
+                                                    <circle cx="20" cy="20" r="18" fill="transparent" stroke="#f1f5f9" strokeWidth="2.5" />
+                                                    <circle cx="20" cy="20" r="18" fill="transparent" stroke="#10b981" strokeWidth="2.5" strokeDasharray="113.1" strokeDashoffset={113.1 - (113.1 * Math.max(0, timeLeft) / 10800)} strokeLinecap="round" className="transition-all duration-1000 ease-linear" />
+                                                </svg>
+                                            </div>
                                         </div>
                                         <div className="flex flex-col text-left">
                                             <p className="text-[13px] font-medium text-slate-600 mb-0.5">{t('expirationTime')}</p>
@@ -769,7 +1160,7 @@ export default function CheckoutPage() {
                         <div className="w-6 h-6 bg-slate-900 rounded-lg flex items-center justify-center">
                             < Globe className="w-3.5 h-3.5 text-white stroke-[3px]" />
                         </div>
-                        <span className="text-base font-black tracking-[-1px] text-slate-900">IMESH GATEWAY</span>
+                        <span className="text-base font-black tracking-[-1px] text-slate-900">ORIYOTO GATEWAY</span>
                     </div>
                 </div>
             </div>

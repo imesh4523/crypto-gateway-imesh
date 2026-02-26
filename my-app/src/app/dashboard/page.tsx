@@ -135,6 +135,73 @@ export default async function DashboardOverview() {
                 </Card>
             </div>
 
+            {/* BOT INTEGRATION QUOTAS */}
+            {user.botIntegrationEnabled && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 animate-in slide-in-from-bottom-6 duration-700">
+                    <Card className="bg-white/60 dark:bg-slate-900 border-slate-200 dark:border-white/10 p-6 rounded-2xl relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500 rounded-l-2xl" />
+                        <div className="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider text-xs flex items-center gap-2">
+                                    <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+                                    Bot Clicks Quota
+                                </h3>
+                                <div className="mt-2 text-3xl font-black text-slate-900 dark:text-white flex items-baseline gap-2">
+                                    {user.botClicksUsed} <span className="text-sm font-medium text-slate-500">/ {user.botClicksQuota}</span>
+                                </div>
+                            </div>
+                            {user.trialActive ? (
+                                <span className="px-3 py-1 bg-indigo-500/10 text-indigo-500 text-[10px] font-black uppercase tracking-widest rounded-full border border-indigo-500/20">
+                                    Free Trial
+                                </span>
+                            ) : (
+                                <span className="px-3 py-1 bg-emerald-500/10 text-emerald-500 text-[10px] font-black uppercase tracking-widest rounded-full border border-emerald-500/20">
+                                    Premium
+                                </span>
+                            )}
+                        </div>
+                        <div className="w-full h-2 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
+                            <div
+                                className={`h-full rounded-full transition-all duration-1000 ${(user.botClicksUsed / user.botClicksQuota) > 0.9
+                                    ? 'bg-rose-500'
+                                    : (user.botClicksUsed / user.botClicksQuota) > 0.7
+                                        ? 'bg-amber-500'
+                                        : 'bg-indigo-500'
+                                    }`}
+                                style={{ width: `${Math.min(100, (user.botClicksUsed / user.botClicksQuota) * 100)}%` }}
+                            />
+                        </div>
+                        <p className="text-xs text-slate-500 mt-3 font-medium">
+                            {user.botClicksQuota - user.botClicksUsed} clicks remaining in your current plan.
+                        </p>
+                    </Card>
+
+                    <Card className="bg-white/60 dark:bg-slate-900 border-slate-200 dark:border-white/10 p-6 rounded-2xl relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500 rounded-l-2xl" />
+                        <div className="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider text-xs flex items-center gap-2">
+                                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                    Compute Power Used
+                                </h3>
+                                <div className="mt-2 text-3xl font-black text-slate-900 dark:text-white flex items-baseline gap-2">
+                                    {(Number(user.hostingPowerLimit) * 0.42).toFixed(2)}vCPU <span className="text-sm font-medium text-slate-500">/ {user.hostingPowerLimit.toString()}vCPU Limit</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="w-full h-2 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
+                            <div
+                                className="h-full bg-emerald-500 rounded-full transition-all duration-1000"
+                                style={{ width: `42%` }} // Mock usage
+                            />
+                        </div>
+                        <div className="text-xs text-slate-500 mt-3 font-medium flex items-center gap-1.5">
+                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> System healthy and under limits.
+                        </div>
+                    </Card>
+                </div>
+            )}
+
             <OverviewCharts />
 
             <div className="bg-white/60 dark:bg-white/5 border border-slate-200 dark:border-white/10 backdrop-blur-xl rounded-2xl overflow-hidden flex flex-col">

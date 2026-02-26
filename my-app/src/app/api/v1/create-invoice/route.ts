@@ -53,7 +53,7 @@ export async function POST(req: Request) {
         const requestedAmount = Number(amount);
 
         // Generate Custom Unique ID for the site via env var
-        const prefix = process.env.GATEWAY_ID_PREFIX || 'IMESH-';
+        const prefix = process.env.GATEWAY_ID_PREFIX || 'ORIYOTO-';
         const customId = `${prefix}${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
         const customTxId = `${prefix}${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
 

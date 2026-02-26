@@ -7,8 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
-
 // ============================================
 // Enums
 // ============================================
@@ -42,10 +40,10 @@ model User {
   email         String?   @unique
   emailVerified DateTime?
   image         String?
-  password      String?   // For credential login
-  
-  role          Role      @default(MERCHANT)
-  
+  password      String? // For credential login
+
+  role Role @default(MERCHANT)
+
   // 2FA Support
   twoFactorEnabled Boolean @default(false)
   twoFactorSecret  String?
@@ -56,124 +54,174 @@ model User {
   totalIncome      Decimal @default(0.0)
 
   // Sandbox / Test Mode Balances
-  testBalance      Decimal @default(0.0)
-  
+  testBalance Decimal @default(0.0)
+
+  // Telegram Bot Integration / Free Trial
+  botIntegrationEnabled Boolean   @default(false)
+  trialActive           Boolean   @default(true)
+  trialExpiresAt        DateTime?
+  botClicksQuota        Int       @default(500) // Lifetime clicks allowed in free trial
+  botClicksUsed         Int       @default(0) // Total clicks consumed
+  hostingPowerLimit     Decimal   @default(1.0) // Virtual CPU / Compute allocation
+
   // Webhook Integration
-  webhookUrl       String?
-  webhookSecret    String?   @default(cuid()) // Secret for signing IPNs sent to the merchant
+  webhookUrl    String?
+  webhookSecret String? @default(cuid()) // Secret for signing IPNs sent to the merchant
 
   // Gateway Customization
-  brandName        String?
-  brandLogoUrl     String?   @db.Text
-  themeBgColor     String?   @default("#f4f5f8")
-  themeCardColor   String?   @default("#ffffff")
-  
-  // Relations
-  accounts      Account[]
-  sessions      Session[]
-  apiKeys       ApiKey[]
-  transactions  Transaction[]
-  invoices      Invoice[]
-  withdrawals   Withdrawal[]
-  loginHistory  LoginHistory[]
+  brandName      String?
+  brandLogoUrl   String? @db.Text
+  themeBgColor   String? @default("#f4f5f8")
+  themeCardColor String? @default("#ffffff")
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  // Payment Method Controls
+  enabledCryptoWallet Boolean @default(true)
+  enabledBinancePay   Boolean @default(true)
+
+  // Relations
+  accounts     Account[]
+  sessions     Session[]
+  apiKeys      ApiKey[]
+  transactions Transaction[]
+  invoices     Invoice[]
+  withdrawals  Withdrawal[]
+  loginHistory LoginHistory[]
+
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  BotIntegration BotIntegration?
+
+  // Shop Bot Multitenant Architecture
+  botProducts           BotProduct[]
+  botCredentials        BotCredential[]
+  botCustomers          BotCustomer[]
+  botOrders             BotOrder[]
+  botPayments           BotPayment[]
+  botBroadcastChannels  BotBroadcastChannel[]
+  botBroadcastMessages  BotBroadcastMessage[]
 }
 
 model LoginHistory {
-  id          String   @id @default(cuid())
-  userId      String
-  ipAddress   String?  // The IP Address used for login
-  userAgent   String?  // The browser/device info
-  location    String?  // Optional parsed location
-  status      String   @default("SUCCESS") // SUCCESS, FAILED_PASSWORD, FAILED_2FA
-  
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String  @id @default(cuid())
+  userId    String
+  ipAddress String? // The IP Address used for login
+  userAgent String? // The browser/device info
+  location  String? // Optional parsed location
+  status    String  @default("SUCCESS") // SUCCESS, FAILED_PASSWORD, FAILED_2FA
 
-  createdAt   DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
 }
 
 model ApiKey {
-  id             String   @id @default(cuid())
-  key            String   @unique 
-  prefix         String   // Visible part, e.g., pk_live_a1b2...
-  name           String   @default("Default API Key")
-  walletAddress  String?  // Receiving wallet address for this API key
-  active         Boolean  @default(true)
-  isTestMode     Boolean  @default(false) // Whether this key is for sandbox testing
-  
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id            String  @id @default(cuid())
+  key           String  @unique
+  prefix        String // Visible part, e.g., pk_live_a1b2...
+  name          String  @default("Default API Key")
+  walletAddress String? // Receiving wallet address for this API key
+  active        Boolean @default(true)
+  isTestMode    Boolean @default(false) // Whether this key is for sandbox testing
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ============================================
+// Telegram Bot Settings for the Merchant
+// ============================================
+
+model BotIntegration {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  telegramToken  String? // Bot Father Token
+  broadcastToken String? // Optional secondary token
+  botUsername    String? // For displaying to the merchant
+
+  // Specific gateway keys inside the bot
+  binanceApiKey    String?
+  binanceSecretKey String?
+  binancePayId     String?
+
+  bybitApiKey    String?
+  bybitSecretKey String?
+  bybitPayId     String?
+
+  status String @default("INACTIVE") // ACTIVE, INACTIVE, SUSPENDED (e.g., trial over)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Transaction {
-  id                 String   @id @default(cuid())
-  platformTxId       String   @unique @default(cuid()) // Our Master TxID generated for the merchant
-  providerTxId       String?  // Underlying provider's TxID (from NowPayments, added via webhook)
+  id           String  @id @default(cuid())
+  platformTxId String  @unique @default(cuid()) // Our Master TxID generated for the merchant
+  providerTxId String? // Underlying provider's TxID (from NowPayments, added via webhook)
 
-  amount             Decimal  // For sqlite compat without scaling
-  currency           String   // e.g., USDT, BTC
-  
-  feePlatform        Decimal  @default(0.0) // 3% fee charged to the merchant
-  feeProvider        Decimal  @default(0.0) // 0.5% fee charged by the provider
-  profitPlatform     Decimal  @default(0.0) // 2.5% platform margin
-  amountMerchant     Decimal  @default(0.0) // amount added to merchant balance: amount - feePlatform
-  payAddress         String?  // Crypto deposit address generated by provider for customer to pay
-  payAmount          Decimal? // The precise crypto amount to be paid
-  payCurrency        String?  // The specific crypto currency selected
-  
-  status             TransactionStatus @default(PENDING)
-  customerEmail      String?  // Optional customer details
-  isTestMode         Boolean  @default(false) // Whether this is a sandbox transaction
+  amount   Decimal // For sqlite compat without scaling
+  currency String // e.g., USDT, BTC
 
-  invoiceId          String?  @unique
-  invoice            Invoice? @relation(fields: [invoiceId], references: [id])
+  feePlatform    Decimal  @default(0.0) // 3% fee charged to the merchant
+  feeProvider    Decimal  @default(0.0) // 0.5% fee charged by the provider
+  profitPlatform Decimal  @default(0.0) // 2.5% platform margin
+  amountMerchant Decimal  @default(0.0) // amount added to merchant balance: amount - feePlatform
+  payAddress     String? // Crypto deposit address generated by provider for customer to pay
+  payAmount      Decimal? // The precise crypto amount to be paid
+  payCurrency    String? // The specific crypto currency selected
 
-  userId             String
-  merchant           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status        TransactionStatus @default(PENDING)
+  customerEmail String? // Optional customer details
+  isTestMode    Boolean           @default(false) // Whether this is a sandbox transaction
 
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  invoiceId String?  @unique
+  invoice   Invoice? @relation(fields: [invoiceId], references: [id])
+
+  userId   String
+  merchant User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Withdrawal {
-  id        String   @id @default(cuid())
-  
-  amount    Decimal
-  currency  String
-  address   String   // Destination Crypto address for the merchant's payout
-  
-  status    WithdrawalStatus @default(PENDING)
-  txHash    String?  // Blockchain transaction hash when payout completes
-  
-  userId    String
-  merchant  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id String @id @default(cuid())
+
+  amount   Decimal
+  currency String
+  address  String // Destination Crypto address for the merchant's payout
+
+  status WithdrawalStatus @default(PENDING)
+  txHash String? // Blockchain transaction hash when payout completes
+
+  userId   String
+  merchant User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Invoice {
-  id               String   @id @default(cuid())
-  amount           Decimal  // Requested fiat or crypto amount
-  currency         String   @default("USD") // E.g., USD
-  orderId          String?  // Merchant's internal order ID
+  id               String  @id @default(cuid())
+  amount           Decimal // Requested fiat or crypto amount
+  currency         String  @default("USD") // E.g., USD
+  orderId          String? // Merchant's internal order ID
   orderDescription String?
-  
-  status           String   @default("PENDING") // PENDING, COMPLETED, EXPIRED
-  isTestMode       Boolean  @default(false)
-  
-  userId           String
-  merchant         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  transaction      Transaction? // Link to the specific crypto payment transaction once selected
+  status     String  @default("PENDING") // PENDING, COMPLETED, EXPIRED
+  isTestMode Boolean @default(false)
 
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  userId   String
+  merchant User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  transaction Transaction? // Link to the specific crypto payment transaction once selected
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // ============================================
@@ -181,18 +229,18 @@ model Invoice {
 // ============================================
 
 model Account {
-  id                 String  @id @default(cuid())
-  userId             String
-  type               String
-  provider           String
-  providerAccountId  String
-  refresh_token      String?
-  access_token       String?
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String?
-  session_state      String?
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -213,4 +261,134 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+// ============================================
+// Shop Bot App Models (Multi-tenant)
+// ============================================
+
+model BotProduct {
+  id          String   @id @default(cuid())
+  name        String
+  description String?  @db.Text
+  type        String   // Category (e.g. AWS, DigitalOcean)
+  price       Decimal  // Stored for DB precision; integer represented easily
+  status      String   @default("available")
+  
+  userId      String
+  merchant    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  credentials BotCredential[]
+  orders      BotOrder[]
+
+  createdAt   DateTime @default(now())
+}
+
+model BotCredential {
+  id          String   @id @default(cuid())
+  productId   String
+  product     BotProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  content     String   @db.Text
+  status      String   @default("available") // available, sold
+
+  userId      String
+  merchant    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  orders      BotOrder[]
+
+  createdAt   DateTime @default(now())
+}
+
+model BotCustomer {
+  id                 String   @id @default(cuid())
+  telegramId         String
+  username           String?
+  firstName          String?
+  lastName           String?
+  balance            Decimal  @default(0.0)
+  lastAction         String?
+  lastMessageId      Int?
+  lastErrorMessageId Int?
+  tutorialBuyVideo   String?
+  tutorialDepositVideo String?
+  doApiKey           String?
+  lastDropletId      String?
+
+  userId             String
+  merchant           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  orders             BotOrder[]
+  payments           BotPayment[]
+
+  createdAt          DateTime @default(now())
+
+  @@unique([telegramId, userId]) // one telegram human mapped per merchant bot
+}
+
+model BotOrder {
+  id             String   @id @default(cuid())
+  productId      String?
+  product        BotProduct? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  
+  credentialId   String?
+  credential     BotCredential? @relation(fields: [credentialId], references: [id], onDelete: SetNull)
+  
+  customerId     String?
+  customer       BotCustomer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  
+  status         String   @default("completed")
+
+  userId         String
+  merchant       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt      DateTime @default(now())
+}
+
+model BotPayment {
+  id             String   @id @default(cuid())
+  customerId     String
+  customer       BotCustomer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  
+  amount         Decimal
+  currency       String   @default("USD")
+  status         String   @default("pending")
+  paymentMethod  String
+  externalId     String?
+  cryptomusUuid  String?
+
+  userId         String
+  merchant       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model BotBroadcastChannel {
+  id          String   @id @default(cuid())
+  channelId   String
+  name        String
+  
+  userId      String
+  merchant    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+
+  @@unique([channelId, userId])
+}
+
+model BotBroadcastMessage {
+  id          String   @id @default(cuid())
+  content     String   @db.Text
+  imageUrl    String?
+  buttonText  String?
+  buttonUrl   String?
+  interval    Int?     // in minutes
+  status      String   @default("active")
+  sentCount   Int      @default(0)
+
+  userId      String
+  merchant    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
 }

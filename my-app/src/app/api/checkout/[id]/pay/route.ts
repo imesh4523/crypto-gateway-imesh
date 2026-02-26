@@ -28,6 +28,28 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             return NextResponse.json({ error: 'Invoice already paid' }, { status: 400 });
         }
 
+        // Fetch the merchant's settings specifically using raw SQL to ensure accuracy
+        const merchants: any[] = await prisma.$queryRawUnsafe(
+            `SELECT "enabledCryptoWallet", "enabledBinancePay" FROM "User" WHERE "id" = $1`,
+            invoice.userId
+        );
+        const merchantSettings = merchants[0];
+
+        const isCryptoEnabled = merchantSettings?.enabledCryptoWallet !== false && merchantSettings?.enabledcryptowallet !== false;
+        const isBinanceEnabled = merchantSettings?.enabledBinancePay !== false && merchantSettings?.enabledbinancepay !== false;
+
+        // --- SECURITY ENHANCEMENT: Prevent spoofing disabled payment methods ---
+        if (payCurrency === 'BINANCE_PAY') {
+            if (!isBinanceEnabled) {
+                return NextResponse.json({ error: 'Binance Pay is not enabled for this merchant' }, { status: 403 });
+            }
+        } else {
+            // It's a crypto payment
+            if (!isCryptoEnabled) {
+                return NextResponse.json({ error: 'Cryptocurrency payments are not enabled for this merchant' }, { status: 403 });
+            }
+        }
+
         // Check if there is already a PENDING transaction
         // We will update it later instead of deleting it.
         // if (invoice.transaction && invoice.transaction.status === 'PENDING') {
@@ -84,7 +106,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         const amountMerchant = requestedAmount - feePlatform;
 
         // Generate Custom Unique ID for the site via config if no transaction exists yet
-        const prefix = process.env.GATEWAY_ID_PREFIX || 'IMESH-';
+        const prefix = process.env.GATEWAY_ID_PREFIX || 'ORIYOTO-';
         const customTxId = `${prefix}${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
 
         // Save or Update Transaction
@@ -99,10 +121,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
                     profitPlatform: profitPlatform,
                     amountMerchant: amountMerchant,
                     payAddress: paymentData.pay_address,
-                    payAmount: paymentData.pay_amount,
-                    payCurrency: paymentData.pay_currency,
-                    status: 'PENDING',
-                    isTestMode: invoice.isTestMode
+
+                    currency: paymentData.pay_currency,
+                    status: 'PENDING'
                 }
             });
         } else {
@@ -112,18 +133,17 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
                     platformTxId: customTxId,
                     providerTxId: paymentData.payment_id?.toString() || `mock_${Date.now()}`,
                     amount: requestedAmount,
-                    currency: invoice.currency,
+
                     feePlatform: feePlatform,
                     feeProvider: feeProvider,
                     profitPlatform: profitPlatform,
                     amountMerchant: amountMerchant,
                     payAddress: paymentData.pay_address,
-                    payAmount: paymentData.pay_amount,
-                    payCurrency: paymentData.pay_currency,
+
+                    currency: paymentData.pay_currency,
                     status: 'PENDING',
                     userId: invoice.userId,
-                    invoiceId: invoice.id,
-                    isTestMode: invoice.isTestMode
+                    invoiceId: invoice.id
                 }
             });
         }
