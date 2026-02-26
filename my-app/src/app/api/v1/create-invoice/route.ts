@@ -7,6 +7,7 @@ import crypto from 'crypto';
 export async function POST(req: Request) {
     try {
         let merchantId: string;
+        let isTestKey = false;
 
         // 1. Authenticate: Try API Key first, then fallback to Session
         const authHeader = req.headers.get('Authorization');
@@ -15,13 +16,14 @@ export async function POST(req: Request) {
             const apiKeyStr = authHeader.split(' ')[1];
             const apiKey = await prisma.apiKey.findUnique({
                 where: { key: apiKeyStr },
-                select: { userId: true, active: true }
+                select: { userId: true, active: true, isTestMode: true }
             });
 
             if (!apiKey || !apiKey.active) {
                 return NextResponse.json({ error: 'Invalid or inactive API Key' }, { status: 401 });
             }
             merchantId = apiKey.userId;
+            isTestKey = apiKey.isTestMode;
         } else {
             // Fallback to Session (for Dashboard Manual Creation)
             const session = await getServerSession(authOptions);
@@ -29,6 +31,10 @@ export async function POST(req: Request) {
                 return NextResponse.json({ error: 'Missing Authorization header or active session' }, { status: 401 });
             }
             merchantId = (session.user as any).id;
+
+            // Check if user has Test Mode enabled via cookie in session context (optional, but for simplicity let's stick to API key for now)
+            // Or maybe just check the request for a query param or header
+            isTestKey = false;
         }
 
         const merchant = await prisma.user.findUnique({ where: { id: merchantId } });
@@ -60,6 +66,7 @@ export async function POST(req: Request) {
                 currency: currency,
                 orderId: orderId?.toString(),
                 orderDescription: orderDescription?.toString(),
+                isTestMode: isTestKey
             }
         });
 
@@ -72,7 +79,8 @@ export async function POST(req: Request) {
                 currency: currency,
                 status: 'PENDING',
                 userId: merchant.id,
-                invoiceId: invoice.id
+                invoiceId: invoice.id,
+                isTestMode: isTestKey
             }
         });
 

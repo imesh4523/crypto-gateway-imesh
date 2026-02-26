@@ -1,0 +1,22 @@
+{
+    "name": "soltio-shopify-payment",
+    "version": "1.0.0",
+    "description": "Soltio Crypto Payment Gateway for Shopify",
+    "main": "index.js",
+    "scripts": {
+        "start": "node index.js",
+        "dev": "nodemon index.js"
+    },
+    "dependencies": {
+        "express": "^4.18.2",
+        "dotenv": "^16.3.1",
+        "crypto": "^1.0.1",
+        "axios": "^1.6.0",
+        "shopify-api-node": "^3.12.0"
+    },
+    "devDependencies": {
+        "nodemon": "^3.0.2"
+    },
+    "license": "MIT",
+    "author": "Soltio (https://soltio.com)"
+}

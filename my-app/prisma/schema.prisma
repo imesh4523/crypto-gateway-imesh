@@ -54,11 +54,20 @@ model User {
   availableBalance Decimal @default(0.0)
   pendingBalance   Decimal @default(0.0)
   totalIncome      Decimal @default(0.0)
+
+  // Sandbox / Test Mode Balances
+  testBalance      Decimal @default(0.0)
   
   // Webhook Integration
   webhookUrl       String?
   webhookSecret    String?   @default(cuid()) // Secret for signing IPNs sent to the merchant
 
+  // Gateway Customization
+  brandName        String?
+  brandLogoUrl     String?   @db.Text
+  themeBgColor     String?   @default("#f4f5f8")
+  themeCardColor   String?   @default("#ffffff")
+  
   // Relations
   accounts      Account[]
   sessions      Session[]
@@ -92,6 +101,7 @@ model ApiKey {
   name           String   @default("Default API Key")
   walletAddress  String?  // Receiving wallet address for this API key
   active         Boolean  @default(true)
+  isTestMode     Boolean  @default(false) // Whether this key is for sandbox testing
   
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -118,6 +128,7 @@ model Transaction {
   
   status             TransactionStatus @default(PENDING)
   customerEmail      String?  // Optional customer details
+  isTestMode         Boolean  @default(false) // Whether this is a sandbox transaction
 
   invoiceId          String?  @unique
   invoice            Invoice? @relation(fields: [invoiceId], references: [id])
@@ -154,6 +165,7 @@ model Invoice {
   orderDescription String?
   
   status           String   @default("PENDING") // PENDING, COMPLETED, EXPIRED
+  isTestMode       Boolean  @default(false)
   
   userId           String
   merchant         User     @relation(fields: [userId], references: [id], onDelete: Cascade)

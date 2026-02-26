@@ -1,0 +1,20 @@
+{
+    "name": "soltio/magento2-payment",
+    "description": "Soltio Crypto Payment Gateway for Magento 2",
+    "require": {
+        "php": "~7.4.0||~8.0.0||~8.1.0||~8.2.0"
+    },
+    "type": "magento2-module",
+    "version": "1.0.0",
+    "license": [
+        "MIT"
+    ],
+    "autoload": {
+        "files": [
+            "registration.php"
+        ],
+        "psr-4": {
+            "Soltio\\Payment\\": ""
+        }
+    }
+}

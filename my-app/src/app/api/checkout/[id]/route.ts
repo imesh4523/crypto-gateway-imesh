@@ -9,11 +9,17 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         const invoice = await prisma.invoice.findUnique({
             where: { id: invoiceId },
             include: { merchant: true, transaction: true }
-        });
+        }) as any;
 
         if (!invoice) {
             return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
         }
+
+        const rawMerchant: any[] = await prisma.$queryRawUnsafe(
+            `SELECT "name", "brandName", "brandLogoUrl", "themeBgColor" FROM "User" WHERE "id" = $1`,
+            invoice.userId
+        );
+        const merchant = rawMerchant[0] || invoice.merchant;
 
         return NextResponse.json({
             success: true,
@@ -22,7 +28,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
                 amount: invoice.amount.toString(),
                 currency: invoice.currency,
                 status: invoice.status,
-                merchantName: invoice.merchant.name || 'Merchant',
+                merchantName: merchant.brandName || merchant.name || 'Merchant',
+                brandLogoUrl: merchant.brandLogoUrl,
+                themeBgColor: merchant.themeBgColor || "#f4f5f8",
                 orderId: invoice.orderId,
                 transaction: invoice.transaction ? {
                     status: invoice.transaction.status,

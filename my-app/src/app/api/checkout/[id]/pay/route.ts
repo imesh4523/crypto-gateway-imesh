@@ -46,12 +46,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
         let paymentData: any;
 
-        if (MASTER_API_KEY === 'your-master-nowpayments-key' || MASTER_API_KEY === 'your-sample-api-key') {
-            // MOCK MODE
+        if (invoice.isTestMode || MASTER_API_KEY === 'your-master-nowpayments-key' || MASTER_API_KEY === 'your-sample-api-key') {
+            // TEST MODE or MOCK MODE
             paymentData = {
-                payment_id: `mock_${Date.now()}`,
-                pay_address: "TV9XbK47T66tL2gZk3qg7K7U",
-                pay_amount: Number(invoice.amount) * 1.05,
+                payment_id: `test_${Date.now()}`,
+                pay_address: "TEST_WALLET_ADDRESS_DO_NOT_PAY",
+                pay_amount: Number(invoice.amount),
                 pay_currency: payCurrency,
                 order_id: invoiceId
             };
@@ -101,7 +101,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
                     payAddress: paymentData.pay_address,
                     payAmount: paymentData.pay_amount,
                     payCurrency: paymentData.pay_currency,
-                    status: 'PENDING'
+                    status: 'PENDING',
+                    isTestMode: invoice.isTestMode
                 }
             });
         } else {
@@ -121,7 +122,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
                     payCurrency: paymentData.pay_currency,
                     status: 'PENDING',
                     userId: invoice.userId,
-                    invoiceId: invoice.id
+                    invoiceId: invoice.id,
+                    isTestMode: invoice.isTestMode
                 }
             });
         }

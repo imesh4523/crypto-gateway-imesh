@@ -33,10 +33,17 @@ export default function TransactionsPage() {
 
     useEffect(() => {
         fetchTransactions(page);
+
+        // Auto-refresh transaction statuses quietly without interrupting the UI (polling)
+        const interval = setInterval(() => {
+            fetchTransactions(page, true);
+        }, 5000);
+
+        return () => clearInterval(interval);
     }, [page]);
 
-    const fetchTransactions = async (pageNumber: number) => {
-        setFetchingData(true);
+    const fetchTransactions = async (pageNumber: number, silent: boolean = false) => {
+        if (!silent) setFetchingData(true);
         try {
             const res = await fetch(`/api/v1/transactions?page=${pageNumber}&limit=10`);
             const data = await res.json();
@@ -57,11 +64,31 @@ export default function TransactionsPage() {
                     successCount: succ,
                     total: data.pagination.total
                 });
+
+                // If a transaction is currently open in the details modal, update its status live too!
+                if (selectedTx && !silent) {
+                    const updatedSelectedTx = data.data.find((tx: any) => tx.id === selectedTx.id);
+                    if (updatedSelectedTx && updatedSelectedTx.status !== selectedTx.status) {
+                        setSelectedTx({ ...updatedSelectedTx });
+                    }
+                } else if (silent) {
+                    // Quick state replacement hack to update modal state if it's open dynamically
+                    setSelectedTx((currentSelected: any) => {
+                        if (!currentSelected) return currentSelected;
+                        const newlyFetchedData = data.data.find((tx: any) => tx.id === currentSelected.id);
+                        if (newlyFetchedData && newlyFetchedData.status !== currentSelected.status) {
+                            return newlyFetchedData;
+                        }
+                        // fallback for generic details updates like amount
+                        if (newlyFetchedData) return newlyFetchedData;
+                        return currentSelected;
+                    });
+                }
             }
         } catch (error) {
             console.error(error);
         } finally {
-            setFetchingData(false);
+            if (!silent) setFetchingData(false);
         }
     };
 

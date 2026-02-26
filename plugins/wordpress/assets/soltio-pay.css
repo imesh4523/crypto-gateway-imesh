@@ -1,0 +1,258 @@
+/* Soltio Pay Button Styles */
+
+.soltio-pay-wrapper {
+    display: inline-block;
+}
+
+.soltio-pay-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 28px;
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    color: #ffffff;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.soltio-pay-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(79, 70, 229, 0.4);
+}
+
+.soltio-pay-btn:active {
+    transform: translateY(0);
+}
+
+.soltio-pay-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.soltio-pay-btn .soltio-amount {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+/* Dark Style */
+.soltio-btn-dark {
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+}
+
+.soltio-btn-dark:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+}
+
+/* Minimal Style */
+.soltio-btn-minimal {
+    background: transparent;
+    color: #4f46e5;
+    border: 2px solid #4f46e5;
+    box-shadow: none;
+}
+
+.soltio-btn-minimal:hover {
+    background: #4f46e5;
+    color: #ffffff;
+    box-shadow: 0 8px 25px rgba(79, 70, 229, 0.3);
+}
+
+.soltio-btn-minimal .soltio-amount {
+    background: rgba(79, 70, 229, 0.1);
+    color: #4f46e5;
+}
+
+.soltio-btn-minimal:hover .soltio-amount {
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+}
+
+/* Loading spinner */
+.soltio-pay-btn.loading::after {
+    content: '';
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top: 2px solid #ffffff;
+    border-radius: 50%;
+    animation: soltio-spin 0.6s linear infinite;
+    margin-left: 8px;
+}
+
+@keyframes soltio-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ─── Donation Widget ─── */
+
+.soltio-donate-widget {
+    max-width: 400px;
+    padding: 32px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.soltio-donate-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+    color: #4f46e5;
+}
+
+.soltio-donate-header h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.soltio-donate-desc {
+    color: #64748b;
+    font-size: 14px;
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+.soltio-donate-presets {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.soltio-preset-btn {
+    flex: 1;
+    min-width: 60px;
+    padding: 10px 8px;
+    background: #f1f5f9;
+    border: 2px solid transparent;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #334155;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+
+.soltio-preset-btn:hover {
+    background: #e2e8f0;
+}
+
+.soltio-preset-btn.active {
+    background: #eef2ff;
+    border-color: #4f46e5;
+    color: #4f46e5;
+}
+
+.soltio-donate-custom {
+    display: flex;
+    align-items: center;
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 4px 16px;
+    margin-bottom: 20px;
+    transition: border-color 0.2s;
+}
+
+.soltio-donate-custom:focus-within {
+    border-color: #4f46e5;
+}
+
+.soltio-currency-symbol {
+    font-size: 20px;
+    font-weight: 700;
+    color: #94a3b8;
+    margin-right: 8px;
+}
+
+.soltio-donate-input {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-size: 24px;
+    font-weight: 700;
+    color: #0f172a;
+    padding: 12px 0;
+    outline: none;
+    font-family: inherit;
+    -moz-appearance: textfield;
+}
+
+.soltio-donate-input::-webkit-inner-spin-button,
+.soltio-donate-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.soltio-donate-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 16px 28px;
+    font-size: 16px;
+    border-radius: 14px;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .soltio-donate-widget {
+        background: #0f172a;
+        border-color: #1e293b;
+    }
+
+    .soltio-donate-header h3 {
+        color: #f8fafc;
+    }
+
+    .soltio-donate-desc {
+        color: #94a3b8;
+    }
+
+    .soltio-preset-btn {
+        background: #1e293b;
+        color: #e2e8f0;
+    }
+
+    .soltio-preset-btn:hover {
+        background: #334155;
+    }
+
+    .soltio-preset-btn.active {
+        background: #312e81;
+        border-color: #6366f1;
+        color: #a5b4fc;
+    }
+
+    .soltio-donate-custom {
+        background: #1e293b;
+        border-color: #334155;
+    }
+
+    .soltio-currency-symbol {
+        color: #64748b;
+    }
+
+    .soltio-donate-input {
+        color: #f8fafc;
+    }
+}

@@ -57,9 +57,15 @@ export default function RegisterPage() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-950 flex relative overflow-hidden text-slate-200">
-            <div className="absolute top-[10%] left-[-10%] w-[50%] h-[50%] bg-indigo-500/20 rounded-full blur-[150px] mix-blend-screen pointer-events-none" />
-            <div className="absolute bottom-[-10%] right-[10%] w-[50%] h-[50%] bg-emerald-500/20 rounded-full blur-[150px] mix-blend-screen pointer-events-none" />
+        <div className="min-h-screen flex relative overflow-hidden text-slate-200 bg-transparent">
+            {/* Holographic Background */}
+            <div className="fluid-bg">
+                <div className="color-blob blob-blue"></div>
+                <div className="color-blob blob-purple"></div>
+                <div className="color-blob blob-pink"></div>
+                <div className="color-blob blob-teal"></div>
+                <div className="noise-overlay"></div>
+            </div>
 
             <div className="w-full flex">
                 <div className="w-full lg:w-1/2 flex items-center justify-center p-8 z-10">

@@ -27,10 +27,30 @@ export const authOptions: NextAuthOptions = {
                 }
 
                 const headersList = await headers();
-                const forwardedFor = headersList.get("x-forwarded-for");
-                const realIp = headersList.get("x-real-ip");
-                const ip = forwardedFor?.split(",")[0] || realIp || "127.0.0.1";
+
+                // Cloudflare specific header (highest priority)
+                const cfConnectingIp = headersList.get("cf-connecting-ip");
+                const xForwardedFor = headersList.get("x-forwarded-for");
+                const realIpHeader = headersList.get("x-real-ip");
+
+                const ip = cfConnectingIp || realIpHeader || xForwardedFor?.split(",")[0].trim() || "127.0.0.1";
                 const userAgent = headersList.get("user-agent") || "Unknown Browser";
+
+                // Simple Location Lookup (Optional but improved)
+                let location = "Unknown Location";
+                if (ip !== "127.0.0.1" && ip !== "::1") {
+                    try {
+                        const geoRes = await fetch(`http://ip-api.com/json/${ip}?fields=city,country`);
+                        const geoData = await geoRes.json();
+                        if (geoData.city && geoData.country) {
+                            location = `${geoData.city}, ${geoData.country}`;
+                        }
+                    } catch (e) {
+                        console.error("Geo lookup failed", e);
+                    }
+                } else {
+                    location = "Localhost";
+                }
 
                 const user = await prisma.user.findUnique({
                     where: { email: credentials.email },
@@ -48,7 +68,7 @@ export const authOptions: NextAuthOptions = {
                             userId: user.id,
                             ipAddress: ip,
                             userAgent: userAgent,
-                            location: "Parsed from IP",
+                            location: location,
                             status: "FAILED_PASSWORD"
                         }
                     });
@@ -77,7 +97,7 @@ export const authOptions: NextAuthOptions = {
                                 userId: user.id,
                                 ipAddress: ip,
                                 userAgent: userAgent,
-                                location: "Parsed from IP",
+                                location: location,
                                 status: "FAILED_2FA"
                             }
                         });
@@ -91,7 +111,7 @@ export const authOptions: NextAuthOptions = {
                         userId: user.id,
                         ipAddress: ip,
                         userAgent: userAgent,
-                        location: "Parsed from IP",
+                        location: location,
                         status: "SUCCESS"
                     }
                 });

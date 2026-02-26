@@ -39,10 +39,10 @@ export function ProfileSettings({ email, role }: { email: string, role: string }
     };
 
     return (
-        <div className="bg-white/5 border border-white/10 backdrop-blur-xl p-6 rounded-2xl">
-            <div className="flex items-center gap-3 mb-6 border-b border-white/10 pb-4">
-                <User className="text-indigo-400 w-5 h-5" />
-                <h3 className="font-bold text-white">Profile Details</h3>
+        <div className="bg-white/60 dark:bg-white/5 border border-slate-200 dark:border-white/10 backdrop-blur-xl p-6 rounded-2xl">
+            <div className="flex items-center gap-3 mb-6 border-b border-slate-200 dark:border-white/10 pb-4">
+                <User className="text-indigo-600 dark:text-indigo-400 w-5 h-5" />
+                <h3 className="font-bold text-slate-900 dark:text-white">Profile Details</h3>
             </div>
 
             {!isChangingPass ? (
@@ -50,21 +50,21 @@ export function ProfileSettings({ email, role }: { email: string, role: string }
                     <div className="space-y-5">
                         <div className="flex flex-col gap-1">
                             <label className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Email Address</label>
-                            <p className="text-slate-200 font-medium">{email}</p>
+                            <p className="text-slate-900 dark:text-slate-200 font-medium">{email}</p>
                         </div>
                         <div className="flex flex-col gap-2">
                             <label className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Account Role</label>
                             <div className="flex">
-                                <span className="capitalize bg-indigo-500/10 px-3 py-1 rounded-full text-indigo-300 border border-indigo-500/20 text-xs font-bold tracking-wide">
+                                <span className="capitalize bg-indigo-50 dark:bg-indigo-500/10 px-3 py-1 rounded-full text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/20 text-xs font-bold tracking-wide">
                                     {role}
                                 </span>
                             </div>
                         </div>
                     </div>
-                    {status && <p className="text-sm text-center">{status}</p>}
+                    {status && <p className="text-sm text-center text-slate-700 dark:text-slate-300">{status}</p>}
                     <button
                         onClick={() => setIsChangingPass(true)}
-                        className="w-full mt-4 py-2 border border-white/10 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
+                        className="w-full mt-4 py-2 border border-slate-200 dark:border-white/10 rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/10 transition-colors"
                     >
                         Change Password
                     </button>
@@ -72,33 +72,33 @@ export function ProfileSettings({ email, role }: { email: string, role: string }
             ) : (
                 <form onSubmit={handlePasswordChange} className="space-y-4 animate-in fade-in zoom-in-95 duration-200">
                     <div>
-                        <label className="text-xs text-slate-400 font-medium">Current Password</label>
+                        <label className="text-xs text-slate-600 dark:text-slate-400 font-medium">Current Password</label>
                         <input
                             type="password"
                             required minLength={6}
                             value={currentPass}
                             onChange={(e) => setCurrentPass(e.target.value)}
-                            className="w-full mt-1 bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500"
+                            className="w-full mt-1 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500"
                         />
                     </div>
                     <div>
-                        <label className="text-xs text-slate-400 font-medium">New Password</label>
+                        <label className="text-xs text-slate-600 dark:text-slate-400 font-medium">New Password</label>
                         <input
                             type="password"
                             required minLength={6}
                             value={newPass}
                             onChange={(e) => setNewPass(e.target.value)}
-                            className="w-full mt-1 bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500"
+                            className="w-full mt-1 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500"
                         />
                     </div>
 
-                    {status && <p className="text-sm text-rose-400">{status}</p>}
+                    {status && <p className="text-sm text-rose-500 dark:text-rose-400">{status}</p>}
 
                     <div className="flex gap-2 mt-4">
                         <button
                             type="button"
                             onClick={() => setIsChangingPass(false)}
-                            className="flex-1 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white transition-colors border border-white/10"
+                            className="flex-1 py-2 rounded-lg bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-white transition-colors border border-slate-200 dark:border-white/10"
                         >
                             Cancel
                         </button>

@@ -28,11 +28,11 @@ export default function OverviewCharts() {
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             {/* Revenue Area Chart */}
-            <Card className="lg:col-span-2 bg-white/5 border-white/10 backdrop-blur-xl p-6 rounded-2xl overflow-hidden relative">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-[100px] pointer-events-none" />
-                <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+            <Card className="lg:col-span-2 bg-white/60 dark:bg-white/5 border-slate-200 dark:border-white/10 backdrop-blur-xl p-6 rounded-2xl overflow-hidden relative">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/20 dark:bg-indigo-500/10 rounded-full blur-[100px] pointer-events-none" />
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
                     Revenue Analytics
-                    <span className="text-xs font-normal px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300">Last 7 Days</span>
+                    <span className="text-xs font-normal px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300">Last 7 Days</span>
                 </h3>
                 <div className="h-[280px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
@@ -84,9 +84,9 @@ export default function OverviewCharts() {
             </Card>
 
             {/* Payment Status Donut Chart */}
-            <Card className="bg-white/5 border-white/10 backdrop-blur-xl p-6 rounded-2xl overflow-hidden relative">
-                <div className="absolute top-0 left-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-[100px] pointer-events-none" />
-                <h3 className="text-lg font-bold text-white mb-6">Payment Success Rate</h3>
+            <Card className="bg-white/60 dark:bg-white/5 border-slate-200 dark:border-white/10 backdrop-blur-xl p-6 rounded-2xl overflow-hidden relative">
+                <div className="absolute top-0 left-0 w-64 h-64 bg-emerald-500/20 dark:bg-emerald-500/10 rounded-full blur-[100px] pointer-events-none" />
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">Payment Success Rate</h3>
                 <div className="h-[280px] w-full flex items-center justify-center">
                     <ResponsiveContainer width="100%" height="100%">
                         <PieChart>

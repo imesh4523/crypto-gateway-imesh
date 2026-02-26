@@ -20,14 +20,20 @@ export default function ApiKeysPage() {
     const [newlyGeneratedKey, setNewlyGeneratedKey] = useState<string | null>(null);
     const [generating, setGenerating] = useState(false);
 
+    const [environment, setEnvironment] = useState<'live' | 'test'>('live');
+
     useEffect(() => {
-        fetchData();
+        const storedMode = localStorage.getItem("isTestMode");
+        const mode = storedMode === "true" ? 'test' : 'live';
+        setEnvironment(mode);
+        fetchData(mode);
     }, []);
 
-    const fetchData = async () => {
+    const fetchData = async (mode = environment) => {
         try {
+            const isTest = mode === 'test';
             const [keysRes, webhookRes] = await Promise.all([
-                fetch('/api/v1/keys'),
+                fetch(`/api/v1/keys?isTestMode=${isTest}`),
                 fetch('/api/v1/dashboard/webhook-settings')
             ]);
 
@@ -62,7 +68,10 @@ export default function ApiKeysPage() {
             const res = await fetch('/api/v1/keys', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: newKeyName })
+                body: JSON.stringify({
+                    name: newKeyName,
+                    isTestMode: environment === 'test'
+                })
             });
 
             const data = await res.json();
@@ -107,43 +116,52 @@ export default function ApiKeysPage() {
         <div className="space-y-8">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
+                    <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-500 dark:from-white dark:to-slate-400">
                         API Keys
                     </h1>
-                    <p className="text-slate-400 mt-1">Manage your keys for authenticating API requests.</p>
+                    <p className="text-slate-500 dark:text-slate-400 mt-1">Manage your keys for authenticating API requests.</p>
                 </div>
-                <Button
-                    onClick={() => setIsGenerateModalOpen(true)}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full"
-                >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Generate New Key
-                </Button>
+                <div className="flex items-center gap-3">
+                    <Button
+                        onClick={() => window.open('/api-docs', '_blank')}
+                        variant="outline"
+                        className="border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-700 dark:text-white rounded-full"
+                    >
+                        API Documentation
+                    </Button>
+                    <Button
+                        onClick={() => setIsGenerateModalOpen(true)}
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full"
+                    >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Generate New Key
+                    </Button>
+                </div>
             </div>
 
-            <Card className="bg-indigo-500/10 border-indigo-500/20 backdrop-blur-xl p-6 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-6">
+            <Card className="bg-indigo-50 dark:bg-indigo-500/10 border-indigo-100 dark:border-indigo-500/20 backdrop-blur-xl p-6 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-6">
                 <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-full bg-indigo-500/20 flex flex-shrink-0 items-center justify-center text-indigo-400">
+                    <div className="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-500/20 flex flex-shrink-0 items-center justify-center text-indigo-600 dark:text-indigo-400">
                         <ShieldCheck className="w-6 h-6" />
                     </div>
                     <div>
-                        <h3 className="text-lg font-bold text-white mb-1">Webhook Secret</h3>
-                        <p className="text-sm text-slate-400 mb-2">Used to verify that webhook payload signatures were sent by Soltio.</p>
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">Webhook Secret</h3>
+                        <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">Used to verify that webhook payload signatures were sent by Soltio.</p>
                         <div className="flex flex-col sm:flex-row items-center gap-3">
-                            <div className="bg-black/40 border border-white/10 px-4 py-2 rounded-lg font-mono text-xs text-slate-300 tracking-wider flex-1 flex justify-between items-center">
+                            <div className="bg-white/50 dark:bg-black/40 border border-slate-200 dark:border-white/10 px-4 py-2 rounded-lg font-mono text-xs text-slate-700 dark:text-slate-300 tracking-wider flex-1 flex justify-between items-center">
                                 <span>{isWebhookRevealed ? webhookSecret : "whsec_******************************"}</span>
                                 <button
                                     onClick={() => handleCopy(webhookSecret, "webhook")}
-                                    className="ml-4 hover:text-white transition-colors"
+                                    className="ml-4 hover:text-indigo-600 dark:hover:text-white transition-colors"
                                 >
-                                    {copiedId === "webhook" ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+                                    {copiedId === "webhook" ? <Check className="w-4 h-4 text-green-500 dark:text-green-400" /> : <Copy className="w-4 h-4" />}
                                 </button>
                             </div>
                             <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() => setIsWebhookRevealed(!isWebhookRevealed)}
-                                className="border-white/10 bg-white/5 hover:bg-white/10 w-full sm:w-auto text-white"
+                                className="border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 w-full sm:w-auto text-slate-700 dark:text-white"
                             >
                                 {isWebhookRevealed ? (
                                     <><EyeOff className="w-4 h-4 mr-2" /> Hide</>
@@ -156,10 +174,10 @@ export default function ApiKeysPage() {
                 </div>
             </Card>
 
-            <div className="bg-white/5 border border-white/10 backdrop-blur-xl rounded-2xl overflow-hidden">
+            <div className="bg-white/60 dark:bg-white/5 border border-slate-200 dark:border-white/10 backdrop-blur-xl rounded-2xl overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left">
-                        <thead className="text-xs text-slate-400 uppercase bg-black/20">
+                        <thead className="text-xs text-slate-500 dark:text-slate-400 uppercase bg-slate-100 dark:bg-black/20">
                             <tr>
                                 <th className="px-6 py-4 font-medium">Name</th>
                                 <th className="px-6 py-4 font-medium">Token Prefix</th>
@@ -168,40 +186,40 @@ export default function ApiKeysPage() {
                                 <th className="px-6 py-4 font-medium text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-white/5">
+                        <tbody className="divide-y divide-slate-200 dark:divide-white/5">
                             {apiKeys.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-8 text-center text-slate-400">
+                                    <td colSpan={5} className="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
                                         No API keys found. Generate one to get started.
                                     </td>
                                 </tr>
                             ) : (
                                 apiKeys.map((key) => (
-                                    <tr key={key.id} className="hover:bg-white/[0.02] transition-colors">
-                                        <td className="px-6 py-4 font-medium text-white flex items-center gap-2">
-                                            <Key className="w-4 h-4 text-slate-500" />
+                                    <tr key={key.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors">
+                                        <td className="px-6 py-4 font-medium text-slate-900 dark:text-white flex items-center gap-2">
+                                            <Key className="w-4 h-4 text-slate-400 dark:text-slate-500" />
                                             {key.name}
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="inline-flex items-center bg-black/30 px-2 py-1 rounded font-mono text-xs text-indigo-300 border border-white/5">
+                                            <div className="inline-flex items-center bg-indigo-50 dark:bg-black/30 px-2 py-1 rounded font-mono text-xs text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-white/5">
                                                 {key.prefix}
                                                 <button
                                                     onClick={() => handleCopy(key.prefix, key.id)}
-                                                    className="ml-2 hover:text-white transition-colors"
+                                                    className="ml-2 hover:text-indigo-900 dark:hover:text-white transition-colors"
                                                     title="Copy Token Prefix"
                                                 >
-                                                    {copiedId === key.id ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
+                                                    {copiedId === key.id ? <Check className="w-3 h-3 text-green-500 dark:text-green-400" /> : <Copy className="w-3 h-3" />}
                                                 </button>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-slate-400">{key.created}</td>
-                                        <td className="px-6 py-4 text-slate-400">{key.lastUsed}</td>
+                                        <td className="px-6 py-4 text-slate-600 dark:text-slate-400">{key.created}</td>
+                                        <td className="px-6 py-4 text-slate-600 dark:text-slate-400">{key.lastUsed}</td>
                                         <td className="px-6 py-4 text-right">
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
                                                 onClick={() => handleRevoke(key.id)}
-                                                className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
+                                                className="text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-400/10"
                                             >
                                                 <Trash2 className="w-4 h-4 mr-2" /> Revoke
                                             </Button>

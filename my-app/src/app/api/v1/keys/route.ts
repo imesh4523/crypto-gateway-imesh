@@ -12,8 +12,14 @@ export async function GET(req: Request) {
         }
 
         const userId = (session.user as any).id;
+        const { searchParams } = new URL(req.url);
+        const isTestMode = searchParams.get('isTestMode') === 'true';
+
         const keys = await prisma.apiKey.findMany({
-            where: { userId },
+            where: {
+                userId,
+                isTestMode: isTestMode
+            },
             orderBy: { createdAt: 'desc' },
         });
 
@@ -32,11 +38,12 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { name } = body;
+        const { name, isTestMode } = body;
 
         const rawSecret = crypto.randomBytes(32).toString('hex');
-        const fullKey = `sk_live_${rawSecret}`;
-        const displayPrefix = `sk_live_${rawSecret.substring(0, 6)}...`;
+        const prefix = isTestMode ? 'sk_test_' : 'sk_live_';
+        const fullKey = `${prefix}${rawSecret}`;
+        const displayPrefix = `${prefix}${rawSecret.substring(0, 6)}...`;
 
         const newKey = await prisma.apiKey.create({
             data: {
@@ -44,6 +51,7 @@ export async function POST(req: Request) {
                 prefix: displayPrefix,
                 name: name || 'Default API Key',
                 userId: (session.user as any).id,
+                isTestMode: !!isTestMode
             },
         });
 

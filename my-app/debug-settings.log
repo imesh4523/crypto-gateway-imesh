@@ -1,0 +1,53 @@
+[2026-02-25T07:53:30.651Z] Body: {"brandName":"","brandLogoUrl":"","themeBgColor":"#c22433","themeCardColor":"#ffffff"}, User: cmm1qass400087dr88ya49fsm
+[2026-02-25T07:53:30.887Z] Update FAILED: 
+Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["prisma"].user.update()` invocation in
+C:\Users\azureuser\Desktop\crypto-gateway-imesh-main\my-app\.next\dev\server\chunks\[root-of-the-server]__bdab013d._.js:341:167
+
+  338 const { brandName, brandLogoUrl, themeBgColor, themeCardColor } = body;
+  339 let updatedUser;
+  340 try {
+→ 341     updatedUser = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["prisma"].user.update({
+            where: {
+              id: "cmm1qass400087dr88ya49fsm"
+            },
+            data: {
+              brandName: "",
+              ~~~~~~~~~
+              brandLogoUrl: "",
+              themeBgColor: "#c22433",
+              themeCardColor: "#ffffff",
+          ?   id?: String | StringFieldUpdateOperationsInput,
+          ?   name?: String | NullableStringFieldUpdateOperationsInput | Null,
+          ?   email?: String | NullableStringFieldUpdateOperationsInput | Null,
+          ?   emailVerified?: DateTime | NullableDateTimeFieldUpdateOperationsInput | Null,
+          ?   image?: String | NullableStringFieldUpdateOperationsInput | Null,
+          ?   password?: String | NullableStringFieldUpdateOperationsInput | Null,
+          ?   role?: Role | EnumRoleFieldUpdateOperationsInput,
+          ?   twoFactorEnabled?: Boolean | BoolFieldUpdateOperationsInput,
+          ?   twoFactorSecret?: String | NullableStringFieldUpdateOperationsInput | Null,
+          ?   availableBalance?: Decimal | DecimalFieldUpdateOperationsInput,
+          ?   pendingBalance?: Decimal | DecimalFieldUpdateOperationsInput,
+          ?   totalIncome?: Decimal | DecimalFieldUpdateOperationsInput,
+          ?   webhookUrl?: String | NullableStringFieldUpdateOperationsInput | Null,
+          ?   webhookSecret?: String | NullableStringFieldUpdateOperationsInput | Null,
+          ?   createdAt?: DateTime | DateTimeFieldUpdateOperationsInput,
+          ?   updatedAt?: DateTime | DateTimeFieldUpdateOperationsInput,
+          ?   accounts?: AccountUpdateManyWithoutUserNestedInput,
+          ?   sessions?: SessionUpdateManyWithoutUserNestedInput,
+          ?   apiKeys?: ApiKeyUpdateManyWithoutUserNestedInput,
+          ?   transactions?: TransactionUpdateManyWithoutMerchantNestedInput,
+          ?   invoices?: InvoiceUpdateManyWithoutMerchantNestedInput,
+          ?   withdrawals?: WithdrawalUpdateManyWithoutMerchantNestedInput,
+          ?   loginHistory?: LoginHistoryUpdateManyWithoutUserNestedInput
+            }
+          })
+
+Unknown argument `brandName`. Available options are marked with ?.
+[2026-02-25T07:57:19.994Z] Body: {"brandName":"","brandLogoUrl":"","themeBgColor":"#c22433","themeCardColor":"#ffffff"}, User: cmm1qass400087dr88ya49fsm
+[2026-02-25T07:57:22.775Z] Raw Update Success for cmm1qass400087dr88ya49fsm
+[2026-02-25T08:00:30.485Z] Body: {"brandName":"","brandLogoUrl":"","themeBgColor":"#a6bcdd","themeCardColor":"#ffffff"}, User: cmm1qass400087dr88ya49fsm
+[2026-02-25T08:00:30.943Z] Raw Update Success for cmm1qass400087dr88ya49fsm
+[2026-02-25T08:00:56.727Z] Body: {"brandName":"imesh","brandLogoUrl":"","themeBgColor":"#a6bcdd","themeCardColor":"#ffffff"}, User: cmm1qass400087dr88ya49fsm
+[2026-02-25T08:00:56.958Z] Raw Update Success for cmm1qass400087dr88ya49fsm
+[2026-02-25T12:35:40.299Z] Body: {"brandName":"imesh","brandLogoUrl":"","themeBgColor":"#4d9359","themeCardColor":"#ffffff"}, User: cmm1qass400087dr88ya49fsm
+[2026-02-25T12:35:41.087Z] Raw Update Success for cmm1qass400087dr88ya49fsm

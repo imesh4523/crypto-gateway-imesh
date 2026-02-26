@@ -9,16 +9,15 @@ import { FloatingCryptoIcons } from './components/FloatingCryptoIcons';
 
 export default function Home() {
     return (
-        <div className="bg-[#020617] text-white min-h-screen">
+        <div className="text-white min-h-screen relative overflow-hidden bg-transparent">
             <Script src="/script.js" strategy="afterInteractive" />
 
-            <div className="background-radial">
-                <div className="radial-ring circle-1"></div>
-                <div className="radial-ring circle-2"></div>
-                <div className="glow-purple"></div>
-                <div className="glow-blue"></div>
-                <div className="sparkle sp-1">✦</div>
-                <div className="sparkle sp-2">✦</div>
+            <div className="fluid-bg">
+                <div className="color-blob blob-blue"></div>
+                <div className="color-blob blob-purple"></div>
+                <div className="color-blob blob-pink"></div>
+                <div className="color-blob blob-teal"></div>
+                <div className="noise-overlay"></div>
             </div>
 
             <nav className="navbar">
@@ -139,13 +138,30 @@ export default function Home() {
                 </div>
 
                 <div className="trusted-section">
-                    <p>Trusted by 15,000+ founders & business owners</p>
+                    <p style={{ letterSpacing: '2px', textTransform: 'uppercase', fontSize: '0.85rem', fontWeight: 700 }}>
+                        Seamlessly integrates with your favorite platforms
+                    </p>
                     <div className="logo-row">
-                        <span className="partner-logo">● Logo Ipsum</span>
-                        <span className="partner-logo">◎ Dummy Logo</span>
-                        <span className="partner-logo">❖ Digital Dummy</span>
-                        <span className="partner-logo">✺ Logo Text</span>
-                        <span className="partner-logo">◀ Brand Name ▶</span>
+                        <div className="partner-logo pl-shopify">
+                            <img src="https://cdn.simpleicons.org/shopify/white" alt="Shopify" />
+                            <span>Shopify</span>
+                        </div>
+                        <div className="partner-logo pl-woo">
+                            <img src="https://cdn.simpleicons.org/woocommerce/white" alt="WooCommerce" />
+                            <span>WooCommerce</span>
+                        </div>
+                        <div className="partner-logo pl-wp">
+                            <img src="https://cdn.simpleicons.org/wordpress/white" alt="WordPress" />
+                            <span>WordPress</span>
+                        </div>
+                        <div className="partner-logo pl-magento">
+                            <img src="https://cdn.simpleicons.org/magento/white" alt="Magento" />
+                            <span>Magento</span>
+                        </div>
+                        <div className="partner-logo pl-opencart">
+                            <img src="https://cdn.simpleicons.org/opencart/white" alt="OpenCart" />
+                            <span>OpenCart</span>
+                        </div>
                     </div>
                 </div>
 

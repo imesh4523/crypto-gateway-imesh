@@ -120,7 +120,111 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Animated Fluid Holographic Background */
+.fluid-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -2;
+  overflow: hidden;
+  background: linear-gradient(125deg, #ff007f, #6600ff, #00d2ff, #ccff00);
+  background-size: 400% 400%;
+  animation: flowBg 18s ease infinite;
+}
+
+@keyframes flowBg {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.color-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.85;
+  animation: blobMorph 15s infinite alternate ease-in-out;
+}
+
+.blob-blue {
+  width: 60vw;
+  height: 60vw;
+  background: #ff00cc;
+  top: -10%;
+  left: -10%;
+  animation-delay: 0s;
+}
+
+.blob-purple {
+  width: 80vw;
+  height: 80vw;
+  background: #00ffff;
+  bottom: -20%;
+  right: -10%;
+  animation-delay: -3s;
+}
+
+.blob-pink {
+  width: 65vw;
+  height: 65vw;
+  background: #ccff00;
+  top: 30%;
+  left: 20%;
+  animation-delay: -6s;
+}
+
+.blob-teal {
+  width: 75vw;
+  height: 75vw;
+  background: #4a00e0;
+  top: -5%;
+  right: 15%;
+  animation-delay: -9s;
+}
+
+@keyframes blobMorph {
+  0% {
+    transform: scale(1) translate(0, 0) rotate(0deg);
+  }
+
+  33% {
+    transform: scale(1.1) translate(3%, 5%) rotate(15deg);
+  }
+
+  66% {
+    transform: scale(0.9) translate(-3%, -5%) rotate(-15deg);
+  }
+
+  100% {
+    transform: scale(1.2) translate(5%, -8%) rotate(5deg);
+  }
+}
+
+.noise-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.15;
+  mix-blend-mode: overlay;
+  pointer-events: none;
 }
