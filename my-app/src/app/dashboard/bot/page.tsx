@@ -27,18 +27,15 @@ export default async function BotIntegrationPage() {
         <div className="max-w-6xl mx-auto space-y-8 animate-in slide-in-from-bottom-8 duration-700">
             <AutoRefresh intervalMs={15000} />
 
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">Telegram Bot Integration</h1>
-                    <p className="text-slate-500 mt-2 text-lg">Connect your Cloud Shop Bot and manage limits.</p>
-                </div>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <p className="text-slate-800 dark:text-slate-200 text-lg font-medium">Connect your Cloud Shop Bot and manage limits.</p>
                 {user.trialActive ? (
-                    <div className="px-5 py-2.5 bg-indigo-500/10 text-indigo-500 font-bold rounded-full border border-indigo-500/20 shadow-sm flex items-center gap-2">
+                    <div className="px-5 py-2.5 bg-white/40 dark:bg-white/10 text-indigo-600 dark:text-indigo-400 font-bold rounded-full border border-white/50 dark:border-white/5 shadow-sm backdrop-blur-md flex items-center gap-2">
                         <Zap className="w-5 h-5" />
                         Free Trial Active
                     </div>
                 ) : (
-                    <div className="px-5 py-2.5 bg-emerald-500/10 text-emerald-500 font-bold rounded-full border border-emerald-500/20 shadow-sm">
+                    <div className="px-5 py-2.5 bg-white/40 dark:bg-white/10 text-emerald-600 dark:text-emerald-400 font-bold rounded-full border border-white/50 dark:border-white/5 shadow-sm backdrop-blur-md">
                         Premium Active
                     </div>
                 )}
@@ -47,56 +44,56 @@ export default async function BotIntegrationPage() {
             {/* Telegram Admin App Sub-navigation */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                 <Link href="/dashboard/bot/products" className="group">
-                    <Card className="p-4 bg-white/60 dark:bg-white/5 border-slate-200 dark:border-white/10 hover:bg-white hover:dark:bg-white/10 backdrop-blur-xl rounded-2xl shadow-sm transition-all text-center flex flex-col items-center justify-center gap-3 h-full">
-                        <div className="w-10 h-10 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Card className="p-4 bg-white/40 dark:bg-white/10 border border-white/50 dark:border-white/5 hover:bg-white/60 hover:dark:bg-white/20 backdrop-blur-md rounded-[32px] shadow-sm transition-all text-center flex flex-col items-center justify-center gap-2 h-28">
+                        <div className="w-10 h-10 rounded-full bg-blue-500/10 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
                             <Package className="w-5 h-5" />
                         </div>
-                        <span className="font-bold text-slate-800 dark:text-slate-200 text-sm">Products</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-200 text-[13px]">Products</span>
                     </Card>
                 </Link>
 
                 <Link href="/dashboard/bot/inventory" className="group">
-                    <Card className="p-4 bg-white/60 dark:bg-white/5 border-slate-200 dark:border-white/10 hover:bg-white hover:dark:bg-white/10 backdrop-blur-xl rounded-2xl shadow-sm transition-all text-center flex flex-col items-center justify-center gap-3 h-full">
-                        <div className="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Card className="p-4 bg-white/40 dark:bg-white/10 border border-white/50 dark:border-white/5 hover:bg-white/60 hover:dark:bg-white/20 backdrop-blur-md rounded-[32px] shadow-sm transition-all text-center flex flex-col items-center justify-center gap-2 h-28">
+                        <div className="w-10 h-10 rounded-full bg-teal-500/10 text-teal-600 flex items-center justify-center group-hover:scale-110 transition-transform">
                             <Archive className="w-5 h-5" />
                         </div>
-                        <span className="font-bold text-slate-800 dark:text-slate-200 text-sm">Inventory</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-200 text-[13px]">Inventory</span>
                     </Card>
                 </Link>
 
                 <Link href="/dashboard/bot/orders" className="group">
-                    <Card className="p-4 bg-white/60 dark:bg-white/5 border-slate-200 dark:border-white/10 hover:bg-white hover:dark:bg-white/10 backdrop-blur-xl rounded-2xl shadow-sm transition-all text-center flex flex-col items-center justify-center gap-3 h-full">
-                        <div className="w-10 h-10 rounded-full bg-indigo-500/10 text-indigo-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Card className="p-4 bg-white/40 dark:bg-white/10 border border-white/50 dark:border-white/5 hover:bg-white/60 hover:dark:bg-white/20 backdrop-blur-md rounded-[32px] shadow-sm transition-all text-center flex flex-col items-center justify-center gap-2 h-28">
+                        <div className="w-10 h-10 rounded-full bg-indigo-500/10 text-indigo-600 flex items-center justify-center group-hover:scale-110 transition-transform">
                             <RefreshCcw className="w-5 h-5" />
                         </div>
-                        <span className="font-bold text-slate-800 dark:text-slate-200 text-sm">Orders</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-200 text-[13px]">Orders</span>
                     </Card>
                 </Link>
 
                 <Link href="/dashboard/bot/payments" className="group">
-                    <Card className="p-4 bg-white/60 dark:bg-white/5 border-slate-200 dark:border-white/10 hover:bg-white hover:dark:bg-white/10 backdrop-blur-xl rounded-2xl shadow-sm transition-all text-center flex flex-col items-center justify-center gap-3 h-full">
-                        <div className="w-10 h-10 rounded-full bg-amber-500/10 text-amber-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Card className="p-4 bg-white/40 dark:bg-white/10 border border-white/50 dark:border-white/5 hover:bg-white/60 hover:dark:bg-white/20 backdrop-blur-md rounded-[32px] shadow-sm transition-all text-center flex flex-col items-center justify-center gap-2 h-28">
+                        <div className="w-10 h-10 rounded-full bg-amber-500/10 text-amber-600 flex items-center justify-center group-hover:scale-110 transition-transform">
                             <CreditCard className="w-5 h-5" />
                         </div>
-                        <span className="font-bold text-slate-800 dark:text-slate-200 text-sm">Payments</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-200 text-[13px]">Payments</span>
                     </Card>
                 </Link>
 
                 <Link href="/dashboard/bot/broadcast" className="group">
-                    <Card className="p-4 bg-white/60 dark:bg-white/5 border-slate-200 dark:border-white/10 hover:bg-white hover:dark:bg-white/10 backdrop-blur-xl rounded-2xl shadow-sm transition-all text-center flex flex-col items-center justify-center gap-3 h-full">
-                        <div className="w-10 h-10 rounded-full bg-rose-500/10 text-rose-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Card className="p-4 bg-white/40 dark:bg-white/10 border border-white/50 dark:border-white/5 hover:bg-white/60 hover:dark:bg-white/20 backdrop-blur-md rounded-[32px] shadow-sm transition-all text-center flex flex-col items-center justify-center gap-2 h-28">
+                        <div className="w-10 h-10 rounded-full bg-rose-500/10 text-rose-600 flex items-center justify-center group-hover:scale-110 transition-transform">
                             <Megaphone className="w-5 h-5" />
                         </div>
-                        <span className="font-bold text-slate-800 dark:text-slate-200 text-sm">Broadcast</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-200 text-[13px]">Broadcast</span>
                     </Card>
                 </Link>
 
                 <Link href="/dashboard/bot/users" className="group">
-                    <Card className="p-4 bg-white/60 dark:bg-white/5 border-slate-200 dark:border-white/10 hover:bg-white hover:dark:bg-white/10 backdrop-blur-xl rounded-2xl shadow-sm transition-all text-center flex flex-col items-center justify-center gap-3 h-full">
-                        <div className="w-10 h-10 rounded-full bg-cyan-500/10 text-cyan-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Card className="p-4 bg-white/40 dark:bg-white/10 border border-white/50 dark:border-white/5 hover:bg-white/60 hover:dark:bg-white/20 backdrop-blur-md rounded-[32px] shadow-sm transition-all text-center flex flex-col items-center justify-center gap-2 h-28">
+                        <div className="w-10 h-10 rounded-full bg-cyan-500/10 text-cyan-600 flex items-center justify-center group-hover:scale-110 transition-transform">
                             <Users className="w-5 h-5" />
                         </div>
-                        <span className="font-bold text-slate-800 dark:text-slate-200 text-sm">Users</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-200 text-[13px]">Users</span>
                     </Card>
                 </Link>
             </div>

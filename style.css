@@ -187,6 +187,34 @@ body {
     line-height: 1.6;
 }
 
+.typewriter-container {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.2em;
+}
+
+.typewriter-text {
+    display: inline-block;
+    background: linear-gradient(180deg, #FFFFFF 0%, rgba(255, 255, 255, 0.7) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.cursor-blink {
+    animation: blink 1s step-end infinite;
+    color: #fff;
+    opacity: 1;
+    font-weight: 300;
+    margin-left: 2px;
+}
+
+@keyframes blink {
+    50% {
+        opacity: 0;
+    }
+}
+
 .btn-secondary {
     background: #fff;
     color: #000;
@@ -347,6 +375,34 @@ body {
 /* Crypto 3D Floating Icons */
 .crypto-icon-float {
     z-index: 20;
+}
+
+@media (max-width: 1024px) {
+    .card-float.crypto-icon-float {
+        position: absolute !important;
+        transform: none !important;
+    }
+
+    .card-float.binance-float {
+        top: 120px !important;
+        left: 5% !important;
+        right: auto !important;
+        bottom: auto !important;
+    }
+
+    .card-float.usdt-float {
+        top: 380px !important;
+        left: 8% !important;
+        right: auto !important;
+        bottom: auto !important;
+    }
+
+    .card-float.btc-float {
+        top: 150px !important;
+        right: 5% !important;
+        left: auto !important;
+        bottom: auto !important;
+    }
 }
 
 .binance-float {

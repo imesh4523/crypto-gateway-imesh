@@ -1719,6 +1719,35 @@ body {
     z-index: 20;
 }
 
+@media (max-width: 1024px) {
+    .card-float.crypto-icon-float {
+        position: absolute !important;
+        transform: none !important;
+        /* Let animation work by removing transform from !important, but NextJS static float uses none */
+    }
+
+    .card-float.binance-float {
+        top: 120px !important;
+        left: 5% !important;
+        right: auto !important;
+        bottom: auto !important;
+    }
+
+    .card-float.usdt-float {
+        top: 380px !important;
+        left: 8% !important;
+        right: auto !important;
+        bottom: auto !important;
+    }
+
+    .card-float.btc-float {
+        top: 150px !important;
+        right: 5% !important;
+        left: auto !important;
+        bottom: auto !important;
+    }
+}
+
 .binance-float {
     top: 12vh;
     left: 22%;
@@ -2489,4 +2518,288 @@ body {
     font-weight: 900;
     font-size: 1.1rem;
     cursor: pointer;
+}
+
+.transfer-container {
+    grid-template-columns: 1fr 1fr;
+}
+
+@media (max-width: 1024px) {
+    .showcase-area {
+        height: auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .card-float:not(.crypto-icon-float) {
+        position: relative;
+        top: auto !important;
+        left: auto !important;
+        right: auto !important;
+        bottom: auto !important;
+        transform: none !important;
+    }
+
+    .crypto-icon-float {
+        position: absolute;
+    }
+
+    .feature-section {
+        flex-direction: column !important;
+        text-align: center;
+        gap: 40px;
+        padding: 40px 20px;
+    }
+
+    .feature-grid {
+        justify-content: center;
+    }
+
+    .feature-box {
+        text-align: center;
+        align-items: center;
+        flex-direction: column;
+    }
+
+    .card-float-mockup {
+        right: 0;
+        top: auto;
+        bottom: -50px;
+        margin: 0 auto;
+        position: static;
+        margin-top: -50px;
+    }
+
+    .bento-grid {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .row-card {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .top-floating-panel {
+        position: relative;
+        left: auto;
+        top: auto;
+        margin-bottom: 20px;
+    }
+
+    .purple-gradient {
+        align-self: center;
+        margin-right: 0;
+        margin-bottom: 40px;
+    }
+
+    .chart-panel {
+        width: 100%;
+        max-width: 500px;
+    }
+
+    .transfer-form {
+        width: 100%;
+        max-width: 400px;
+    }
+
+    .pricing-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .pricing-card.highlight-card {
+        transform: scale(1);
+    }
+
+    .transfer-container {
+        grid-template-columns: 1fr;
+        gap: 40px;
+    }
+}
+
+@media (max-width: 768px) {
+    .hero {
+        padding-top: 40px;
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    .hero-title {
+        font-size: 2.2rem;
+    }
+
+    .hero-subtitle {
+        font-size: 0.9rem;
+        padding: 0 10px;
+    }
+
+    .navbar {
+        padding: 16px 20px;
+    }
+
+    .nav-links {
+        display: none;
+    }
+
+    .nav-right .btn-primary {
+        padding: 10px 16px;
+        font-size: 0.85rem;
+    }
+
+    .center-card {
+        display: none !important;
+    }
+
+    .binance-float {
+        top: 8% !important;
+        left: 2% !important;
+        transform: scale(0.65) !important;
+    }
+
+    .usdt-float {
+        top: 25% !important;
+        left: 85% !important;
+        transform: scale(0.65) !important;
+    }
+
+    .btc-float {
+        top: 45% !important;
+        right: 85% !important;
+        transform: scale(0.65) !important;
+    }
+
+    .center-card,
+    .transfer-form,
+    .chart-panel,
+    .reward-card,
+    .phone-mockup {
+        width: 100% !important;
+        max-width: 320px;
+        box-sizing: border-box;
+    }
+
+    .bento-card {
+        padding: 24px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .bento-value {
+        font-size: 1.8rem;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .donut-center h3 {
+        font-size: 1.6rem;
+    }
+
+    .donut-chart-box {
+        width: 160px;
+        height: 160px;
+    }
+
+    .donut-center {
+        width: 110px;
+        height: 110px;
+    }
+
+    .purple-gradient {
+        width: 100%;
+        max-width: 250px;
+    }
+
+    .feature-title {
+        font-size: 2rem;
+    }
+
+    .plan-price {
+        font-size: 2.5rem;
+    }
+
+    .footer {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    .mt-100 {
+        margin-top: 50px;
+    }
+
+    .mt-60 {
+        margin-top: 30px;
+    }
+
+    .pt-100 {
+        padding-top: 50px;
+    }
+
+    .showcase-area {
+        margin-top: 50px;
+        padding: 0 20px;
+    }
+
+    .stat-box {
+        min-width: unset;
+        width: 100%;
+        max-width: 320px;
+        box-sizing: border-box;
+    }
+
+    .stat-value {
+        font-size: 1.4rem;
+    }
+
+    .stat-value-large {
+        font-size: 1.8rem;
+    }
+
+    .dual-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .dark-bg-block {
+        padding: 40px 20px;
+    }
+
+    .bar-chart-container {
+        height: 150px;
+    }
+
+    .pricing-card {
+        padding: 30px 20px;
+    }
+
+    .feature-section {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    .logo-row {
+        gap: 20px;
+    }
+
+    .partner-logo {
+        font-size: 1rem;
+    }
+
+    .transfer-container {
+        grid-template-columns: 1fr !important;
+        gap: 40px !important;
+    }
+
+    .transfer-title {
+        font-size: 2rem !important;
+    }
+
+    .preview-side {
+        width: 100%;
+        max-width: 350px;
+        margin: 0 auto;
+    }
 }

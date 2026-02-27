@@ -7,6 +7,7 @@ import { LiveVerification } from './components/LiveVerification';
 import { AnimatedBarChart } from './components/AnimatedBarChart';
 import { FloatingCryptoIcons } from './components/FloatingCryptoIcons';
 import { PaymentPreview } from './components/PaymentPreview';
+import { HeroTypewriter } from './components/HeroTypewriter';
 
 export default function Home() {
     return (
@@ -48,9 +49,10 @@ export default function Home() {
                 <FloatingCryptoIcons />
                 <div className="hero-content">
                     <div className="tag-floating tag-blue">Feature!</div>
-                    <h1 className="hero-title">Smart finance tools for<br />smarter decisions</h1>
-                    <p className="hero-subtitle">Frame community undo rotate blur Flatten rotate pixel clip prototype underline fill
-                        list effect Plugin clip export arrange export component Vertical style horizontal.</p>
+                    <h1 className="hero-title">
+                        <HeroTypewriter />
+                    </h1>
+                    <p className="hero-subtitle">The ultimate crypto gateway for your business.<br />Accept payments globally, instantly, and with zero chargebacks.</p>
 
                     <div className="tag-floating tag-orange">Update</div>
                 </div>
@@ -82,11 +84,7 @@ export default function Home() {
                         <LiveVerification />
                     </div>
 
-                    <div className="card-float tl-card-2" data-speed="-3">
-                        <div className="glass-panel square-icon tilt-element">
-                            <div className="hands-icon">💸</div>
-                        </div>
-                    </div>
+
 
                     <div className="card-float bl-card" data-speed="4">
                         <div className="glass-panel stat-box tilt-element light-theme">
@@ -167,7 +165,7 @@ export default function Home() {
                 </div>
 
                 <section className="transfer-section">
-                    <div className="transfer-container" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', alignItems: 'center', gap: '80px' }}>
+                    <div className="transfer-container" style={{ display: 'grid', alignItems: 'center', gap: '80px' }}>
                         <div className="preview-side">
                             <PaymentPreview />
                         </div>

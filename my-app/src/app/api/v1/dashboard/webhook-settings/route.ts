@@ -17,9 +17,17 @@ export async function POST(req: Request) {
         if (action === 'REGENERATE_SECRET') {
             const updatedUser = await prisma.user.update({
                 where: { id: userId },
-                data: { webhookSecret: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) }
+                data: { webhookSecret: 'whsec_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) }
             });
             return NextResponse.json({ success: true, webhookSecret: updatedUser.webhookSecret });
+        }
+
+        if (action === 'REGENERATE_PUBLIC_KEY') {
+            const updatedUser = await prisma.user.update({
+                where: { id: userId },
+                data: { publicKey: 'pk_live_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) }
+            });
+            return NextResponse.json({ success: true, publicKey: updatedUser.publicKey });
         }
 
         const updatedUser = await prisma.user.update({
@@ -45,7 +53,7 @@ export async function GET() {
         const userId = (session.user as any).id;
         let user = await prisma.user.findUnique({
             where: { id: userId },
-            select: { webhookUrl: true, webhookSecret: true }
+            select: { webhookUrl: true, webhookSecret: true, publicKey: true }
         });
 
         if (!user) {
@@ -53,17 +61,29 @@ export async function GET() {
             return NextResponse.json({
                 success: false,
                 error: 'Account not found. Please logout and register an account.',
-                data: { webhookUrl: '', webhookSecret: 'ACCOUNT_NOT_FOUND' }
+                data: { webhookUrl: '', webhookSecret: 'ACCOUNT_NOT_FOUND', publicKey: 'ACCOUNT_NOT_FOUND' }
             });
         }
 
         // Ensure a secret exists
+        let needsUpdate = false;
+        const updateData: any = {};
+
         if (!user.webhookSecret) {
-            const newSecret = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+            updateData.webhookSecret = 'whsec_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+            needsUpdate = true;
+        }
+
+        if (!user.publicKey) {
+            updateData.publicKey = 'pk_live_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+            needsUpdate = true;
+        }
+
+        if (needsUpdate) {
             user = await prisma.user.update({
                 where: { id: userId },
-                data: { webhookSecret: newSecret },
-                select: { webhookUrl: true, webhookSecret: true }
+                data: updateData,
+                select: { webhookUrl: true, webhookSecret: true, publicKey: true }
             });
         }
 

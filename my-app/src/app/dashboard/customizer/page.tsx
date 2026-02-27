@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
-import { Copy, Save, CheckCircle2, QrCode, MonitorSmartphone, Palette, Check, ImageIcon, Type, Loader2 } from "lucide-react";
+import { Copy, Save, CheckCircle2, QrCode, MonitorSmartphone, Palette, Check, ImageIcon, Type, Loader2, Upload, Trash2, ShieldCheck, Globe } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function CheckoutCustomizer() {
     const [brandName, setBrandName] = useState("");
@@ -13,6 +14,7 @@ export default function CheckoutCustomizer() {
     const [saved, setSaved] = useState(false);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [uploading, setUploading] = useState(false);
     const [activeTab, setActiveTab] = useState("manual"); // 'manual' or 'web3'
 
     // Payment Method Visibility
@@ -44,6 +46,38 @@ export default function CheckoutCustomizer() {
         }
     };
 
+    const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (file.size > 2 * 1024 * 1024) {
+            alert("File size too large. Maximum size is 2MB.");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        setUploading(true);
+        try {
+            const res = await fetch('/api/v1/user/upload-logo', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            if (data.success) {
+                setBrandLogoUrl(data.url);
+            } else {
+                alert(data.error || "Upload failed");
+            }
+        } catch (error) {
+            console.error("Logo upload error:", error);
+            alert("An error occurred during upload");
+        } finally {
+            setUploading(false);
+        }
+    };
+
     const handleSave = async () => {
         setSaving(true);
         const payload = {
@@ -54,7 +88,6 @@ export default function CheckoutCustomizer() {
             enabledCryptoWallet: showCryptoWallet,
             enabledBinancePay: showBinancePay
         };
-        console.log('Sending save request...', payload);
 
         try {
             const res = await fetch('/api/v1/user/gateway-settings', {
@@ -63,13 +96,11 @@ export default function CheckoutCustomizer() {
                 body: JSON.stringify(payload)
             });
 
-            console.log('Response status:', res.status);
             if (res.ok) {
                 setSaved(true);
                 setTimeout(() => setSaved(false), 2000);
             } else {
                 const errorData = await res.json();
-                console.error('Save failed:', errorData);
                 alert(`Error: ${errorData.error || "Failed to save settings"}`);
             }
         } catch (error) {
@@ -89,149 +120,206 @@ export default function CheckoutCustomizer() {
     }
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-6 animate-in fade-in duration-500">
             <div>
-                <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-500 dark:from-white dark:to-slate-400 flex items-center gap-3">
-                    <Palette className="w-8 h-8 text-indigo-600 dark:text-indigo-400" /> Checkout Customizer
+                <h1 className="text-4xl font-black text-[#1a1f36] dark:text-white tracking-tight flex items-center gap-3">
+                    Checkout Customizer
                 </h1>
-                <p className="text-slate-500 dark:text-slate-400 mt-2">Personalize the payment widget to match your brand identity.</p>
+                <p className="text-slate-500 dark:text-slate-400 mt-1 font-bold">Personalize the payment widget to match your brand identity.</p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Left Side: Controls */}
                 <div className="space-y-6">
-                    <Card className="bg-white/60 dark:bg-white/5 border-slate-200 dark:border-white/10 backdrop-blur-xl p-6 rounded-2xl relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/20 dark:bg-indigo-500/10 rounded-full blur-[60px] pointer-events-none" />
+                    <Card className="bg-white/40 dark:bg-white/10 border border-white/50 dark:border-white/5 backdrop-blur-md p-8 rounded-[32px] shadow-sm relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-indigo-500/10 transition-all pointer-events-none" />
 
-                        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">Brand Identity</h3>
+                        <div className="flex items-center gap-4 mb-8 border-b border-white/40 dark:border-white/10 pb-6 relative">
+                            <div className="w-10 h-10 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                                <Palette className="w-5 h-5" />
+                            </div>
+                            <h3 className="text-xl font-black text-[#1a1f36] dark:text-white tracking-tight">Customization</h3>
+                            <div className="absolute bottom-[-1px] left-0 w-24 h-[2px] bg-indigo-500" />
+                        </div>
 
-                        {/* Brand Name */}
-                        <div className="mb-6">
-                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 border-l-2 border-indigo-500 pl-2">Brand / Store Name</label>
-                            <div className="relative group">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500 group-focus-within:text-indigo-600 dark:group-focus-within:text-indigo-400 transition-colors">
-                                    <Type className="w-4 h-4" />
+                        <div className="space-y-6">
+                            {/* Brand Settings Section */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                {/* Brand Name */}
+                                <div className="space-y-2.5">
+                                    <label className="text-[11px] text-slate-500 dark:text-slate-400 uppercase tracking-widest font-black block">Store Name</label>
+                                    <div className="relative group/input">
+                                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within/input:text-indigo-600 transition-colors">
+                                            <Type className="w-4 h-4" />
+                                        </div>
+                                        <input
+                                            type="text"
+                                            value={brandName}
+                                            onChange={(e) => setBrandName(e.target.value)}
+                                            placeholder="Your Store Name"
+                                            className="w-full bg-white dark:bg-black/20 border border-slate-200 dark:border-white/5 rounded-2xl pl-11 pr-4 py-3 text-[#1a1f36] dark:text-white font-bold focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 transition-all outline-none"
+                                        />
+                                    </div>
                                 </div>
-                                <input
-                                    type="text"
-                                    value={brandName}
-                                    onChange={(e) => setBrandName(e.target.value)}
-                                    placeholder="Enter your store name"
-                                    className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-xl pl-10 pr-4 py-2.5 text-slate-900 dark:text-white focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 transition-all outline-none"
-                                />
-                            </div>
-                        </div>
 
-                        {/* Logo URL */}
-                        <div className="mb-6">
-                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 border-l-2 border-indigo-500 pl-2">Logo URL</label>
-                            <div className="relative group">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500 group-focus-within:text-indigo-600 dark:group-focus-within:text-indigo-400 transition-colors">
-                                    <ImageIcon className="w-4 h-4" />
+                                {/* Background Color */}
+                                <div className="space-y-2.5">
+                                    <label className="text-[11px] text-slate-500 dark:text-slate-400 uppercase tracking-widest font-black block">Overlay Color</label>
+                                    <div className="flex items-center gap-3 bg-white dark:bg-black/20 p-2 rounded-2xl border border-slate-200 dark:border-white/5">
+                                        <input
+                                            type="color"
+                                            value={backgroundColor}
+                                            onChange={(e) => setBackgroundColor(e.target.value)}
+                                            className="w-10 h-10 rounded-xl cursor-pointer border-0 bg-transparent p-0"
+                                        />
+                                        <span className="text-xs font-black font-mono text-slate-600 dark:text-slate-400 pr-3">{backgroundColor.toUpperCase()}</span>
+                                    </div>
                                 </div>
-                                <input
-                                    type="text"
-                                    value={brandLogoUrl}
-                                    onChange={(e) => setBrandLogoUrl(e.target.value)}
-                                    placeholder="https://example.com/logo.png"
-                                    className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-xl pl-10 pr-4 py-2.5 text-slate-900 dark:text-white focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 transition-all outline-none text-sm"
-                                />
                             </div>
-                            <p className="text-[10px] text-slate-500 mt-1.5 uppercase tracking-wider font-semibold">Recommended size: 120x40px (PNG/SVG)</p>
-                        </div>
 
-                        <div className="h-px bg-slate-200 dark:bg-white/5 w-full my-8" />
-
-                        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">Styling Options</h3>
-
-                        {/* Background Color */}
-                        <div className="mb-6">
-                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 border-l-2 border-indigo-500 pl-2">Widget Background</label>
-                            <div className="flex items-center gap-3 bg-slate-50 dark:bg-black/20 p-2 rounded-lg border border-slate-200 dark:border-white/5">
-                                <input
-                                    type="color"
-                                    value={backgroundColor}
-                                    onChange={(e) => setBackgroundColor(e.target.value)}
-                                    className="w-8 h-8 rounded cursor-pointer border-0 bg-transparent p-0"
-                                />
-                                <span className="text-sm font-mono text-slate-600 dark:text-slate-400">{backgroundColor.toUpperCase()}</span>
+                            {/* Logo Upload Section */}
+                            <div className="space-y-2.5">
+                                <label className="text-[11px] text-slate-500 dark:text-slate-400 uppercase tracking-widest font-black block">Brand Logo</label>
+                                <div className="flex items-center gap-5 p-5 bg-white/50 dark:bg-black/20 rounded-3xl border border-slate-200 dark:border-white/5 shadow-inner">
+                                    <div className="relative w-20 h-20 rounded-2xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center overflow-hidden group/logo shrink-0">
+                                        {brandLogoUrl ? (
+                                            <img src={brandLogoUrl} alt="Logo Preview" className="max-w-full max-h-full object-contain p-2" />
+                                        ) : (
+                                            <ImageIcon className="w-7 h-7 text-slate-300" />
+                                        )}
+                                        {brandLogoUrl && (
+                                            <button
+                                                onClick={() => setBrandLogoUrl("")}
+                                                className="absolute inset-0 bg-rose-600/80 flex items-center justify-center opacity-0 group-hover/logo:opacity-100 transition-opacity"
+                                            >
+                                                <Trash2 className="w-5 h-5 text-white" />
+                                            </button>
+                                        )}
+                                    </div>
+                                    <div className="flex-1 space-y-2.5">
+                                        <div className="flex flex-col">
+                                            <p className="text-[13px] font-black text-[#1a1f36] dark:text-white tracking-tight">Upload Logo</p>
+                                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">PNG, SVG or JPEG (Max 2MB)</p>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <label className={cn(
+                                                "cursor-pointer px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-black transition-all shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2",
+                                                uploading && "opacity-50 cursor-wait"
+                                            )}>
+                                                {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                                                {uploading ? "Uploading..." : "Upload"}
+                                                <input
+                                                    type="file"
+                                                    className="hidden"
+                                                    accept="image/*"
+                                                    onChange={handleLogoUpload}
+                                                    disabled={uploading}
+                                                />
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
 
-                        <div className="h-px bg-slate-200 dark:bg-white/5 w-full my-8" />
+                            {/* Payment Methods Section */}
+                            <div className="space-y-3 pt-4 border-t border-white/40 dark:border-white/10">
+                                <label className="text-[11px] text-slate-500 dark:text-slate-400 uppercase tracking-widest font-black block">Enabled Payment Methods</label>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div
+                                        onClick={() => setShowCryptoWallet(!showCryptoWallet)}
+                                        className={cn(
+                                            "flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all",
+                                            showCryptoWallet
+                                                ? "bg-indigo-500/5 border-indigo-500/30"
+                                                : "bg-white/50 dark:bg-white/5 border-slate-200 dark:border-white/5"
+                                        )}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className={cn(
+                                                "w-9 h-9 rounded-xl flex items-center justify-center transition-all",
+                                                showCryptoWallet ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20" : "bg-slate-100 dark:bg-white/10 text-slate-400"
+                                            )}>
+                                                <QrCode className="w-4 h-4" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-black text-[#1a1f36] dark:text-white">Direct Crypto</p>
+                                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">Self-custody</p>
+                                            </div>
+                                        </div>
+                                        <div className={cn(
+                                            "w-9 h-5 rounded-full relative transition-all",
+                                            showCryptoWallet ? "bg-indigo-600 shadow-inner" : "bg-slate-200 dark:bg-white/10"
+                                        )}>
+                                            <div className={cn(
+                                                "absolute top-1 w-3 h-3 bg-white rounded-full transition-all shadow-sm",
+                                                showCryptoWallet ? "left-5" : "left-1"
+                                            )} />
+                                        </div>
+                                    </div>
 
-                        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
-                            Payment Methods
-                        </h3>
+                                    <div
+                                        onClick={() => setShowBinancePay(!showBinancePay)}
+                                        className={cn(
+                                            "flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all",
+                                            showBinancePay
+                                                ? "bg-[#FCD535]/5 border-[#FCD535]/30"
+                                                : "bg-white/50 dark:bg-white/5 border-slate-200 dark:border-white/5"
+                                        )}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className={cn(
+                                                "w-9 h-9 rounded-xl flex items-center justify-center transition-all",
+                                                showBinancePay ? "bg-[#FCD535] text-black shadow-lg shadow-[#FCD535]/20" : "bg-slate-100 dark:bg-white/10 text-slate-400"
+                                            )}>
+                                                <ImageIcon className="w-4 h-4" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-black text-[#1a1f36] dark:text-white">Binance Pay</p>
+                                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">Exchange-linked</p>
+                                            </div>
+                                        </div>
+                                        <div className={cn(
+                                            "w-9 h-5 rounded-full relative transition-all",
+                                            showBinancePay ? "bg-[#FCD535] shadow-inner" : "bg-slate-200 dark:bg-white/10"
+                                        )}>
+                                            <div className={cn(
+                                                "absolute top-1 w-3 h-3 bg-white rounded-full transition-all shadow-sm",
+                                                showBinancePay ? "left-5" : "left-1"
+                                            )} />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
-                        {/* Payment Method Toggles */}
-                        <div className="space-y-4 mb-8">
-                            <div
-                                onClick={() => setShowCryptoWallet(!showCryptoWallet)}
-                                className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-all ${showCryptoWallet
-                                    ? "bg-indigo-50/50 dark:bg-indigo-500/10 border-indigo-200 dark:border-indigo-500/30"
-                                    : "bg-slate-50 dark:bg-black/20 border-slate-200 dark:border-white/5"
-                                    }`}
+                            <button
+                                onClick={handleSave}
+                                disabled={saving || saved}
+                                className={cn(
+                                    "w-full py-4 px-6 rounded-2xl font-black flex items-center justify-center gap-3 transition-all",
+                                    saved
+                                        ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/30"
+                                        : "bg-[#1a1f36] dark:bg-indigo-600 hover:bg-[#2d334d] dark:hover:bg-indigo-700 text-white shadow-xl shadow-indigo-600/20"
+                                )}
                             >
-                                <div className="flex items-center gap-3">
-                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${showCryptoWallet ? "bg-indigo-500 text-white" : "bg-slate-200 dark:bg-white/10 text-slate-400"}`}>
-                                        <QrCode className="w-4 h-4" />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-bold text-slate-900 dark:text-white">Crypto Wallet</p>
-                                        <p className="text-[10px] text-slate-500">Enable direct wallet transfers</p>
-                                    </div>
-                                </div>
-                                <div className={`w-10 h-5 rounded-full relative transition-colors ${showCryptoWallet ? "bg-indigo-600" : "bg-slate-300 dark:bg-white/10"}`}>
-                                    <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${showCryptoWallet ? "left-6" : "left-1"}`} />
-                                </div>
-                            </div>
-
-                            <div
-                                onClick={() => setShowBinancePay(!showBinancePay)}
-                                className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-all ${showBinancePay
-                                    ? "bg-[#FCD535]/10 border-[#FCD535]/30"
-                                    : "bg-slate-50 dark:bg-black/20 border-slate-200 dark:border-white/5"
-                                    }`}
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${showBinancePay ? "bg-[#FCD535] text-black" : "bg-slate-200 dark:bg-white/10 text-slate-400"}`}>
-                                        <ImageIcon className="w-4 h-4" />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-bold text-slate-900 dark:text-white">Binance Pay</p>
-                                        <p className="text-[10px] text-slate-500">Enable Binance ecosystem payments</p>
-                                    </div>
-                                </div>
-                                <div className={`w-10 h-5 rounded-full relative transition-colors ${showBinancePay ? "bg-[#FCD535]" : "bg-slate-300 dark:bg-white/10"}`}>
-                                    <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${showBinancePay ? "left-6" : "left-1"}`} />
-                                </div>
-                            </div>
+                                {saving ? (
+                                    <><Loader2 className="w-5 h-5 animate-spin" /> Saving Configuration...</>
+                                ) : saved ? (
+                                    <><CheckCircle2 className="w-5 h-5" /> All Changes Saved</>
+                                ) : (
+                                    <><Save className="w-5 h-5 stroke-[2.5]" /> Apply Settings</>
+                                )}
+                            </button>
                         </div>
-
-                        <button
-                            onClick={handleSave}
-                            disabled={saving || saved}
-                            className={`w-full py-3 px-4 rounded-xl font-medium flex items-center justify-center gap-2 transition-all ${saved
-                                ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                                : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-[0_0_20px_rgba(99,102,241,0.3)] hover:shadow-[0_0_25px_rgba(99,102,241,0.5)]"
-                                }`}
-                        >
-                            {saving ? (
-                                <><Loader2 className="w-5 h-5 animate-spin" /> Saving Changes...</>
-                            ) : saved ? (
-                                <><CheckCircle2 className="w-5 h-5" /> Saved Successfully</>
-                            ) : (
-                                <><Save className="w-5 h-5" /> Save Changes</>
-                            )}
-                        </button>
                     </Card>
 
-                    <div className="bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 rounded-2xl p-5 text-sm text-indigo-800 dark:text-indigo-200 flex gap-3 items-start">
-                        <MonitorSmartphone className="w-5 h-5 mt-0.5 shrink-0" />
-                        <p>
-                            These changes will instantly apply to your public checkout pages and embedded widgets once saved.
-                        </p>
+                    <div className="bg-indigo-500/5 border border-indigo-500/10 rounded-2xl p-5 text-sm text-indigo-700 dark:text-indigo-300 flex gap-4 items-start shadow-sm">
+                        <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center flex-shrink-0">
+                            <MonitorSmartphone className="w-5 h-5" />
+                        </div>
+                        <div className="space-y-1">
+                            <p className="font-black">Instant Integration</p>
+                            <p className="text-[13px] font-bold text-slate-500 dark:text-slate-400">Everything you customize here will reflect instantly on your hosted checkout pages and API deployments.</p>
+                        </div>
                     </div>
                 </div>
 

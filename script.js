@@ -53,4 +53,46 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
+
+    // Typewriter effect
+    const phrases = [
+        "Accept Payments Globally",
+        "Borderless Crypto Gateway",
+        "Fast & Secure Transactions",
+        "The Future of Payments"
+    ];
+    let phraseIndex = 0;
+    let charIndex = 0;
+    let isDeleting = false;
+    const typeElement = document.getElementById('typewriter');
+
+    function typeEffect() {
+        if (!typeElement) return;
+        const currentPhrase = phrases[phraseIndex];
+
+        if (isDeleting) {
+            typeElement.textContent = currentPhrase.substring(0, charIndex - 1);
+            charIndex--;
+        } else {
+            typeElement.textContent = currentPhrase.substring(0, charIndex + 1);
+            charIndex++;
+        }
+
+        let typeSpeed = isDeleting ? 40 : 80;
+
+        if (!isDeleting && charIndex === currentPhrase.length) {
+            typeSpeed = 2000; // Pause at end
+            isDeleting = true;
+        } else if (isDeleting && charIndex === 0) {
+            isDeleting = false;
+            phraseIndex = (phraseIndex + 1) % phrases.length;
+            typeSpeed = 500; // Pause before new phrase
+        }
+
+        setTimeout(typeEffect, typeSpeed);
+    }
+
+    if (typeElement) {
+        setTimeout(typeEffect, 500);
+    }
 });

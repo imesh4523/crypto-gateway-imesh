@@ -30,17 +30,17 @@ export default function BotDashboardUi() {
     ];
 
     const recentOrders = [
-        { id: "1", product: "Cloud Server 4vCPU", user: "@alex_dev", price: 15.00, date: "Today" },
-        { id: "2", product: "VPN Subscription", user: "@crypto_king", price: 5.50, date: "Today" },
-        { id: "3", product: "Cloud Server 2vCPU", user: "@maria_p", price: 8.00, date: "Yesterday" },
-        { id: "4", product: "Dedicated IP", user: "@anon_123", price: 3.00, date: "Yesterday" },
+        { id: "1", product: "Chat GPT Plus", user: "@chatgpt_user", price: 19.99, date: "Today", bg: "bg-emerald-500", text: "text-white", iconText: "GPT" },
+        { id: "2", product: "Claude & Gemini", user: "@ai_pro", price: 29.99, date: "Today", bg: "bg-orange-500/80", text: "text-white", iconText: "Ai" },
+        { id: "3", product: "Cloud Server 4vCPU", user: "@maria_p", price: 59.99, date: "Yesterday", bg: "bg-blue-500", text: "text-white", iconText: "CS" },
+        { id: "4", product: "Dedicated IP", user: "@anon_123", price: 3.00, date: "Yesterday", bg: "bg-indigo-500", text: "text-white", iconText: "IP" },
     ];
 
     return (
-        <div className="mt-12 space-y-8">
-            <div className="flex items-center gap-3">
+        <div className="mt-8 space-y-8">
+            <div className="flex items-center gap-4 ml-2">
                 <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Bot Analytics</h2>
-                <div className="px-3 py-1 bg-indigo-500/10 text-indigo-500 text-xs font-bold rounded-full border border-indigo-500/20">
+                <div className="px-4 py-1.5 bg-white/40 dark:bg-white/10 text-slate-800 dark:text-slate-200 text-xs font-bold rounded-full border border-white/50 dark:border-white/5 shadow-sm backdrop-blur-md">
                     Live Data Sync
                 </div>
             </div>
@@ -75,10 +75,10 @@ export default function BotDashboardUi() {
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
                 {/* Chart */}
-                <Card className="col-span-4 bg-white/60 dark:bg-white/5 border-slate-200 dark:border-white/10 backdrop-blur-xl p-2 rounded-3xl shadow-xl">
+                <Card className="col-span-4 bg-white/40 dark:bg-white/10 border border-white/50 dark:border-white/5 backdrop-blur-md p-2 rounded-[32px] shadow-sm">
                     <CardHeader>
                         <CardTitle className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                            <TrendingUp className="w-5 h-5 text-indigo-500" />
+                            <TrendingUp className="w-5 h-5 text-slate-700 dark:text-slate-300" />
                             Revenue Overview
                         </CardTitle>
                     </CardHeader>
@@ -130,32 +130,32 @@ export default function BotDashboardUi() {
                 </Card>
 
                 {/* Recent Orders */}
-                <Card className="col-span-3 bg-white/60 dark:bg-white/5 border-slate-200 dark:border-white/10 backdrop-blur-xl rounded-3xl shadow-xl">
+                <Card className="col-span-3 bg-white/40 dark:bg-white/10 border border-white/50 dark:border-white/5 backdrop-blur-md rounded-[32px] shadow-sm flex flex-col pt-2">
                     <CardHeader>
                         <CardTitle className="text-xl font-bold text-slate-900 dark:text-white">Recent Purchases</CardTitle>
                     </CardHeader>
-                    <CardContent>
-                        <div className="space-y-6">
+                    <CardContent className="pt-2">
+                        <div className="space-y-5">
                             {recentOrders.map((order) => (
                                 <div key={order.id} className="flex items-center justify-between group">
                                     <div className="flex items-center gap-4">
-                                        <div className="h-12 w-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-500 group-hover:bg-indigo-500 group-hover:text-white transition-colors duration-300">
-                                            <ShoppingCart className="w-5 h-5" />
+                                        <div className={`h-11 w-11 rounded-[16px] ${order.bg} ${order.text} flex items-center justify-center font-bold text-sm shadow-sm group-hover:scale-105 transition-transform duration-300`}>
+                                            {order.iconText}
                                         </div>
                                         <div className="space-y-1">
-                                            <p className="text-sm font-bold text-slate-900 dark:text-white leading-none">
+                                            <p className="text-[13px] font-black text-slate-900 dark:text-white leading-none">
                                                 {order.product}
                                             </p>
-                                            <p className="text-xs text-slate-500">
+                                            <p className="text-[11px] text-slate-500 font-medium">
                                                 {order.user}
                                             </p>
                                         </div>
                                     </div>
-                                    <div className="text-right">
-                                        <p className="text-sm font-bold text-emerald-500">
+                                    <div className="text-right space-y-1">
+                                        <p className="text-[13px] font-black text-slate-900 dark:text-emerald-400">
                                             ${order.price.toFixed(2)}
                                         </p>
-                                        <p className="text-xs text-slate-500">
+                                        <p className="text-[11px] text-slate-500 font-medium">
                                             {order.date}
                                         </p>
                                     </div>
@@ -181,18 +181,18 @@ function StatsCard({
     description: string;
 }) {
     return (
-        <Card className="bg-white/60 dark:bg-white/5 border-slate-200 dark:border-white/10 backdrop-blur-xl rounded-3xl shadow-xl border-0 relative overflow-hidden group hover:-translate-y-1 transition-transform">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+        <Card className="bg-white/40 dark:bg-white/10 border border-white/50 dark:border-white/5 backdrop-blur-md rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden group hover:-translate-y-1 transition-transform p-5 flex flex-col justify-between h-[150px]">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 p-0 mb-2">
+                <CardTitle className="text-[11px] font-extrabold text-slate-700/80 dark:text-slate-300 uppercase tracking-widest pl-1">
                     {title}
                 </CardTitle>
-                <div className="p-2 rounded-xl bg-indigo-500/10 group-hover:bg-indigo-500 transition-colors">
-                    <Icon className="h-4 w-4 text-indigo-500 group-hover:text-white" />
+                <div className="h-8 w-8 flex items-center justify-center rounded-full bg-slate-900/5 dark:bg-white/10 group-hover:bg-slate-900/10 transition-colors shrink-0">
+                    <Icon className="h-4 w-4 text-slate-800 dark:text-slate-200" strokeWidth={2.5} />
                 </div>
             </CardHeader>
-            <CardContent>
-                <div className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">{value}</div>
-                <p className="text-xs text-slate-500 mt-2 font-medium">
+            <CardContent className="p-0 pl-1 mt-auto">
+                <div className="text-[32px] font-black text-[#1a1f36] dark:text-white tracking-tight leading-none mb-2">{value}</div>
+                <p className="text-[12px] text-slate-500 font-medium leading-none mb-0.5">
                     {description}
                 </p>
             </CardContent>

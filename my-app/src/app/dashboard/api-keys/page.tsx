@@ -10,7 +10,10 @@ import { Input } from "@/components/ui/input";
 export default function ApiKeysPage() {
     const [apiKeys, setApiKeys] = useState<any[]>([]);
     const [webhookSecret, setWebhookSecret] = useState("");
+    const [publicKey, setPublicKey] = useState("");
+    const [webhookUrl, setWebhookUrl] = useState("");
     const [loading, setLoading] = useState(true);
+    const [savingWebhook, setSavingWebhook] = useState(false);
     const [isWebhookRevealed, setIsWebhookRevealed] = useState(false);
 
     const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -44,6 +47,8 @@ export default function ApiKeysPage() {
 
             if (webhookData.success) {
                 setWebhookSecret(webhookData.data.webhookSecret);
+                setPublicKey(webhookData.data.publicKey);
+                setWebhookUrl(webhookData.data.webhookUrl || "");
             } else if (webhookData.error === 'DATABASE_MIGRATION_REQUIRED' || webhookData.webhookSecret === 'ACCOUNT_NOT_FOUND') {
                 console.warn("Account mismatch after migration. Please re-register.");
             }
@@ -55,9 +60,31 @@ export default function ApiKeysPage() {
     };
 
     const handleCopy = (text: string, id: string) => {
+        if (!text) return;
         navigator.clipboard.writeText(text);
         setCopiedId(id);
         setTimeout(() => setCopiedId(null), 2000);
+    };
+
+    const handleSaveWebhook = async () => {
+        if (!webhookUrl) return;
+        setSavingWebhook(true);
+        try {
+            const res = await fetch('/api/v1/dashboard/webhook-settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ webhookUrl })
+            });
+            if (res.ok) {
+                alert('Webhook URL updated successfully');
+            } else {
+                alert('Failed to update webhook URL');
+            }
+        } catch (error) {
+            alert('Error updating webhook URL');
+        } finally {
+            setSavingWebhook(false);
+        }
     };
 
     const handleGenerateKey = async () => {
@@ -113,115 +140,169 @@ export default function ApiKeysPage() {
     if (loading) return <div className="text-white p-8 animate-pulse text-center">Loading Keys...</div>;
 
     return (
-        <div className="space-y-8">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="space-y-8 animate-in fade-in duration-500">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
                 <div>
-                    <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-500 dark:from-white dark:to-slate-400">
-                        API Keys
+                    <h1 className="text-4xl font-black text-[#1a1f36] dark:text-white tracking-tight">
+                        Identity & API Keys
                     </h1>
-                    <p className="text-slate-500 dark:text-slate-400 mt-1">Manage your keys for authenticating API requests.</p>
+                    <p className="text-slate-500 dark:text-slate-400 mt-1 font-bold">Manage your merchant credentials and authentication keys.</p>
                 </div>
                 <div className="flex items-center gap-3">
                     <Button
                         onClick={() => window.open('/api-docs', '_blank')}
                         variant="outline"
-                        className="border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-700 dark:text-white rounded-full"
+                        className="border-white/50 dark:border-white/10 bg-white/40 dark:bg-white/5 backdrop-blur-md hover:bg-white/60 dark:hover:bg-white/10 text-slate-700 dark:text-white rounded-full font-black px-6 shadow-sm"
                     >
                         API Documentation
                     </Button>
                     <Button
                         onClick={() => setIsGenerateModalOpen(true)}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full"
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full font-black px-6 shadow-lg shadow-indigo-600/20"
                     >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Generate New Key
+                        <Plus className="w-4 h-4 mr-2 stroke-[3]" />
+                        Generate Secret Key
                     </Button>
                 </div>
             </div>
 
-            <Card className="bg-indigo-50 dark:bg-indigo-500/10 border-indigo-100 dark:border-indigo-500/20 backdrop-blur-xl p-6 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-6">
-                <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-500/20 flex flex-shrink-0 items-center justify-center text-indigo-600 dark:text-indigo-400">
-                        <ShieldCheck className="w-6 h-6" />
-                    </div>
-                    <div>
-                        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">Webhook Secret</h3>
-                        <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">Used to verify that webhook payload signatures were sent by Soltio.</p>
-                        <div className="flex flex-col sm:flex-row items-center gap-3">
-                            <div className="bg-white/50 dark:bg-black/40 border border-slate-200 dark:border-white/10 px-4 py-2 rounded-lg font-mono text-xs text-slate-700 dark:text-slate-300 tracking-wider flex-1 flex justify-between items-center">
-                                <span>{isWebhookRevealed ? webhookSecret : "whsec_******************************"}</span>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Public Identity Card */}
+                <Card className="bg-white/40 dark:bg-white/10 border border-white/50 dark:border-white/5 backdrop-blur-md p-8 rounded-[32px] overflow-hidden relative group shadow-sm">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-emerald-500/20 transition-all" />
+                    <div className="flex items-start gap-5 relative z-10">
+                        <div className="w-14 h-14 rounded-3xl bg-emerald-600/10 dark:bg-emerald-500/20 flex flex-shrink-0 items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-inner">
+                            <Key className="w-7 h-7" />
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="text-xl font-black text-[#1a1f36] dark:text-white mb-1 tracking-tight">Public Key</h3>
+                            <p className="text-[13px] text-slate-500 dark:text-slate-400 mb-4 font-bold max-w-md leading-relaxed">Your unique identifier for client-side SDKs and payment widgets.</p>
+                            <div className="bg-white dark:bg-black/40 border border-slate-200 dark:border-white/10 px-5 py-3 rounded-2xl font-mono text-xs text-slate-700 dark:text-slate-300 tracking-wider flex justify-between items-center shadow-inner">
+                                <span className="font-bold">{publicKey || "Loading..."}</span>
                                 <button
-                                    onClick={() => handleCopy(webhookSecret, "webhook")}
-                                    className="ml-4 hover:text-indigo-600 dark:hover:text-white transition-colors"
+                                    onClick={() => handleCopy(publicKey, "public")}
+                                    className="ml-4 p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-all text-slate-400 hover:text-emerald-600 dark:hover:text-white"
                                 >
-                                    {copiedId === "webhook" ? <Check className="w-4 h-4 text-green-500 dark:text-green-400" /> : <Copy className="w-4 h-4" />}
+                                    {copiedId === "public" ? <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> : <Copy className="w-4 h-4" />}
                                 </button>
                             </div>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setIsWebhookRevealed(!isWebhookRevealed)}
-                                className="border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 w-full sm:w-auto text-slate-700 dark:text-white"
-                            >
-                                {isWebhookRevealed ? (
-                                    <><EyeOff className="w-4 h-4 mr-2" /> Hide</>
-                                ) : (
-                                    <><Eye className="w-4 h-4 mr-2" /> Reveal</>
-                                )}
-                            </Button>
                         </div>
                     </div>
-                </div>
-            </Card>
+                </Card>
 
-            <div className="bg-white/60 dark:bg-white/5 border border-slate-200 dark:border-white/10 backdrop-blur-xl rounded-2xl overflow-hidden">
+                {/* Webhook Shield Card */}
+                <Card className="bg-white/40 dark:bg-white/10 border border-white/50 dark:border-white/5 backdrop-blur-md p-8 rounded-[32px] overflow-hidden relative group shadow-sm">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-indigo-500/20 transition-all" />
+                    <div className="flex items-start gap-5 relative z-10">
+                        <div className="w-14 h-14 rounded-3xl bg-indigo-600/10 dark:bg-indigo-500/20 flex flex-shrink-0 items-center justify-center text-indigo-600 dark:text-indigo-400 shadow-inner">
+                            <ShieldCheck className="w-7 h-7" />
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="text-xl font-black text-[#1a1f36] dark:text-white mb-1 tracking-tight">Webhook Secret</h3>
+                            <p className="text-[13px] text-slate-500 dark:text-slate-400 mb-4 font-bold max-w-md leading-relaxed">Used to verify that webhook payload signatures were sent by Soltio securely.</p>
+                            <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
+                                <div className="bg-white dark:bg-black/40 border border-slate-200 dark:border-white/10 px-5 py-3 rounded-2xl font-mono text-xs text-slate-700 dark:text-slate-300 tracking-wider flex-1 flex justify-between items-center shadow-inner min-w-[200px] w-full">
+                                    <span className="font-bold">{isWebhookRevealed ? webhookSecret : "whsec_••••••••••••••••••••••••••••"}</span>
+                                    <button
+                                        onClick={() => handleCopy(webhookSecret, "webhook")}
+                                        className="ml-4 p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-all text-slate-400 hover:text-indigo-600 dark:hover:text-white"
+                                    >
+                                        {copiedId === "webhook" ? <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                                    </button>
+                                </div>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setIsWebhookRevealed(!isWebhookRevealed)}
+                                    className="border-white/50 dark:border-white/10 bg-white/40 dark:bg-white/5 backdrop-blur-md hover:bg-white/60 dark:hover:bg-white/10 w-full sm:w-auto text-slate-700 dark:text-white rounded-2xl font-black px-6 h-[46px]"
+                                >
+                                    {isWebhookRevealed ? (
+                                        <><EyeOff className="w-4 h-4 mr-2 stroke-[3]" /> Hide</>
+                                    ) : (
+                                        <><Eye className="w-4 h-4 mr-2 stroke-[3]" /> Reveal</>
+                                    )}
+                                </Button>
+                            </div>
+
+                            <div className="mt-6 pt-6 border-t border-white/20">
+                                <label className="block text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">
+                                    Target Webhook (IPN) URL
+                                </label>
+                                <div className="flex flex-col sm:flex-row gap-3">
+                                    <input
+                                        type="url"
+                                        value={webhookUrl}
+                                        onChange={(e) => setWebhookUrl(e.target.value)}
+                                        placeholder="https://your-site.com/api/webhook"
+                                        className="flex-1 bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-[#1a1f36] dark:text-white text-sm font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-inner"
+                                    />
+                                    <Button
+                                        onClick={handleSaveWebhook}
+                                        disabled={savingWebhook}
+                                        className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-black px-6 h-[46px] shadow-lg shadow-indigo-600/20"
+                                    >
+                                        {savingWebhook ? "Saving..." : "Save URL"}
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </Card>
+            </div>
+
+            <div className="bg-white/40 dark:bg-white/5 border border-white/50 dark:border-white/10 backdrop-blur-xl rounded-[28px] overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left">
-                        <thead className="text-xs text-slate-500 dark:text-slate-400 uppercase bg-slate-100 dark:bg-black/20">
+                    <table className="w-full text-left whitespace-nowrap">
+                        <thead className="text-[13px] text-slate-500 dark:text-slate-400 font-black bg-white/40 dark:bg-transparent border-b border-white/40 dark:border-white/5">
                             <tr>
-                                <th className="px-6 py-4 font-medium">Name</th>
-                                <th className="px-6 py-4 font-medium">Token Prefix</th>
-                                <th className="px-6 py-4 font-medium">Created On</th>
-                                <th className="px-6 py-4 font-medium">Last Used</th>
-                                <th className="px-6 py-4 font-medium text-right">Actions</th>
+                                <th className="px-6 py-5 font-black uppercase tracking-wider">Name</th>
+                                <th className="px-6 py-5 font-black uppercase tracking-wider">Token Prefix</th>
+                                <th className="px-6 py-5 font-black uppercase tracking-wider">Created On</th>
+                                <th className="px-6 py-5 font-black uppercase tracking-wider text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-200 dark:divide-white/5">
+                        <tbody className="divide-y divide-white/40 dark:divide-white/[0.03]">
                             {apiKeys.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
-                                        No API keys found. Generate one to get started.
+                                    <td colSpan={4} className="px-6 py-20 text-center text-slate-500">
+                                        <div className="w-20 h-20 bg-white/40 dark:bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 border border-white/50 dark:border-white/10 shadow-sm">
+                                            <Key className="w-10 h-10 text-slate-300" />
+                                        </div>
+                                        <p className="font-black text-slate-800 dark:text-slate-300 text-lg">No API keys found</p>
+                                        <p className="text-sm mt-1 text-slate-500 font-bold">Generate your first key to start using the API.</p>
                                     </td>
                                 </tr>
                             ) : (
                                 apiKeys.map((key) => (
-                                    <tr key={key.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors">
-                                        <td className="px-6 py-4 font-medium text-slate-900 dark:text-white flex items-center gap-2">
-                                            <Key className="w-4 h-4 text-slate-400 dark:text-slate-500" />
-                                            {key.name}
+                                    <tr key={key.id} className="group hover:bg-white/60 dark:hover:bg-white/[0.02] transition-all">
+                                        <td className="px-6 py-5 font-black text-[#1a1f36] dark:text-white">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center">
+                                                    <Key className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                                                </div>
+                                                {key.name}
+                                            </div>
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <div className="inline-flex items-center bg-indigo-50 dark:bg-black/30 px-2 py-1 rounded font-mono text-xs text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-white/5">
-                                                {key.prefix}
+                                        <td className="px-6 py-5">
+                                            <div className="inline-flex items-center bg-indigo-50/50 dark:bg-black/30 pl-3 pr-1 py-1 rounded-xl font-mono text-[13px] text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-white/10 shadow-inner">
+                                                <span className="font-bold">{key.prefix}</span>
                                                 <button
                                                     onClick={() => handleCopy(key.prefix, key.id)}
-                                                    className="ml-2 hover:text-indigo-900 dark:hover:text-white transition-colors"
+                                                    className="ml-2 p-1.5 rounded-lg hover:bg-indigo-100 dark:hover:bg-white/10 transition-all text-slate-400 hover:text-indigo-600 dark:hover:text-white"
                                                     title="Copy Token Prefix"
                                                 >
-                                                    {copiedId === key.id ? <Check className="w-3 h-3 text-green-500 dark:text-green-400" /> : <Copy className="w-3 h-3" />}
+                                                    {copiedId === key.id ? <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                                                 </button>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-slate-600 dark:text-slate-400">{key.created}</td>
-                                        <td className="px-6 py-4 text-slate-600 dark:text-slate-400">{key.lastUsed}</td>
-                                        <td className="px-6 py-4 text-right">
+                                        <td className="px-6 py-5 text-[13px] text-slate-600 dark:text-slate-400 font-bold">{key.created}</td>
+                                        <td className="px-6 py-5 text-right">
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
                                                 onClick={() => handleRevoke(key.id)}
-                                                className="text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-400/10"
+                                                className="text-rose-500 dark:text-rose-400 hover:text-rose-600 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-400/10 rounded-xl font-black px-4"
                                             >
-                                                <Trash2 className="w-4 h-4 mr-2" /> Revoke
+                                                <Trash2 className="w-4 h-4 mr-2 stroke-[2.5]" /> Revoke
                                             </Button>
                                         </td>
                                     </tr>
@@ -234,72 +315,72 @@ export default function ApiKeysPage() {
 
             {/* Generate Key Modal */}
             <Dialog open={isGenerateModalOpen} onOpenChange={setIsGenerateModalOpen}>
-                <DialogContent className="bg-slate-900 border-white/10 text-white p-6 shadow-2xl rounded-2xl">
-                    <DialogHeader>
-                        <DialogTitle className="text-xl font-bold">
-                            {newlyGeneratedKey ? "API Key Generated ✅" : "Generate New API Key"}
+                <DialogContent className="bg-white/90 dark:bg-slate-900/90 border-white/50 dark:border-white/10 backdrop-blur-2xl p-8 shadow-2xl rounded-[32px] max-w-md w-full overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-1.5 bg-indigo-500" />
+                    <DialogHeader className="mb-6">
+                        <DialogTitle className="text-2xl font-black text-[#1a1f36] dark:text-white tracking-tight">
+                            {newlyGeneratedKey ? "Key Generated ✅" : "New API Key"}
                         </DialogTitle>
-                        <DialogDescription className="text-slate-400">
+                        <DialogDescription className="text-slate-500 dark:text-slate-400 font-bold mt-2">
                             {newlyGeneratedKey
-                                ? "Please copy this key now. You won't be able to see it again."
-                                : "Give your new API key a memorable name to identify its purpose."}
+                                ? "Please copy this key now and store it safely. You won't be able to see it again for security reasons."
+                                : "Give your key a descriptive name to help you identify it later."}
                         </DialogDescription>
                     </DialogHeader>
 
                     {newlyGeneratedKey ? (
-                        <div className="space-y-4 my-4">
+                        <div className="space-y-6 my-6 p-6 rounded-2xl bg-indigo-500/5 border border-indigo-500/20">
                             <div>
-                                <label className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5 block">Secret Key</label>
-                                <div className="bg-black/50 border border-indigo-500/30 p-4 rounded-xl flex items-center justify-between gap-4 break-all">
-                                    <code className="text-indigo-300 font-mono text-sm">{newlyGeneratedKey}</code>
+                                <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3 block">Your Secret Key</label>
+                                <div className="bg-white dark:bg-black/50 border border-indigo-500/30 p-4 rounded-xl flex flex-col items-center gap-4 shadow-inner">
+                                    <code className="text-indigo-600 dark:text-indigo-400 font-mono text-sm font-bold break-all text-center leading-relaxed">{newlyGeneratedKey}</code>
                                     <Button
-                                        size="sm"
                                         onClick={() => handleCopy(newlyGeneratedKey, 'new-key')}
-                                        className="bg-indigo-600 hover:bg-indigo-700 flex-shrink-0"
+                                        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-black shadow-lg shadow-indigo-600/20 h-11"
                                     >
-                                        {copiedId === 'new-key' ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
-                                        {copiedId === 'new-key' ? 'Copied' : 'Copy'}
+                                        {copiedId === 'new-key' ? <Check className="w-4 h-4 mr-2 stroke-[3]" /> : <Copy className="w-4 h-4 mr-2 stroke-[3]" />}
+                                        {copiedId === 'new-key' ? 'Copied to Clipboard' : 'Copy Key'}
                                     </Button>
                                 </div>
                             </div>
                         </div>
                     ) : (
-                        <div className="my-4">
-                            <label className="text-sm font-medium text-slate-300 mb-1.5 block">Key Name</label>
+                        <div className="my-8">
+                            <label className="text-[11px] font-black text-[#1a1f36] dark:text-slate-300 uppercase tracking-widest mb-3 block">Key Name</label>
                             <Input
                                 value={newKeyName}
                                 onChange={(e) => setNewKeyName(e.target.value)}
-                                placeholder="e.g., Production Next.js App"
-                                className="bg-black/30 border-white/10 text-white placeholder:text-slate-500"
+                                placeholder="e.g., Main Production Site"
+                                className="bg-white dark:bg-black/30 border-slate-200 dark:border-white/10 text-[#1a1f36] dark:text-white placeholder:text-slate-400 font-bold h-12 rounded-xl focus:ring-2 focus:ring-indigo-500 transition-all shadow-inner"
                             />
                         </div>
                     )}
 
-                    <DialogFooter>
+                    <DialogFooter className="gap-3">
                         {newlyGeneratedKey ? (
                             <Button
                                 onClick={closeGenerateModal}
-                                className="w-full sm:w-auto bg-slate-800 hover:bg-slate-700 text-white"
+                                className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:opacity-90 rounded-xl font-black h-12 transition-all shadow-lg"
                             >
-                                Done
+                                I've saved my key
                             </Button>
                         ) : (
-                            <>
+                            <div className="flex gap-3 w-full">
                                 <Button
                                     variant="outline"
                                     onClick={closeGenerateModal}
-                                    className="border-white/10 bg-transparent text-white hover:bg-white/5"
+                                    className="flex-1 border-slate-200 dark:border-white/10 bg-white dark:bg-transparent text-slate-600 dark:text-white hover:bg-slate-50 dark:hover:bg-white/5 rounded-xl font-black h-12 transition-all"
                                 >
                                     Cancel
                                 </Button>
                                 <Button
                                     onClick={handleGenerateKey}
-                                    disabled={!newKeyName.trim()}
-                                    className="bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                                    disabled={!newKeyName.trim() || generating}
+                                    className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50 disabled:cursor-not-allowed rounded-xl font-black h-12 transition-all shadow-lg shadow-indigo-600/20"
                                 >
-                                    Generate
+                                    {generating ? "Generating..." : "Generate Key"}
                                 </Button>
-                            </>
+                            </div>
                         )}
                     </DialogFooter>
                 </DialogContent>

@@ -64,9 +64,10 @@ model User {
   botClicksUsed         Int       @default(0) // Total clicks consumed
   hostingPowerLimit     Decimal   @default(1.0) // Virtual CPU / Compute allocation
 
-  // Webhook Integration
+  // Webhook & API Identity
   webhookUrl    String?
   webhookSecret String? @default(cuid()) // Secret for signing IPNs sent to the merchant
+  publicKey     String? @unique @default(cuid()) // Public key for frontend identification
 
   // Gateway Customization
   brandName      String?
