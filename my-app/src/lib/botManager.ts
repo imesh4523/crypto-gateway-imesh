@@ -1,7 +1,8 @@
 import TelegramBot from "node-telegram-bot-api";
 import { prisma } from "./prisma";
+import { decrypt } from "./encryption";
 
-const db = prisma as any; // Bot models not in generated types until prisma generate succeeds
+const db = prisma as any;
 
 interface BotRegistry {
     [token: string]: {
@@ -21,27 +22,38 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 export async function startBotForToken(token: string) {
-    if (botRegistry[token]) {
+    // 1. Decrypt the token if it's stored encrypted (iv:authTag:payload)
+    const rawToken = decrypt(token);
+    if (!rawToken) return;
+
+    if (botRegistry[rawToken]) {
         try {
-            botRegistry[token].bot.stopPolling();
+            botRegistry[rawToken].bot.stopPolling();
         } catch (e) {
             console.warn("Error stopping bot", e);
         }
-        delete botRegistry[token];
+        delete botRegistry[rawToken];
     }
 
     try {
+        // 2. Find the integration by token (searching both encrypted and decrypted - decrypted is safe because decrypt() returns the input if not encrypted)
         const botIntegration = await prisma.botIntegration.findFirst({
-            where: { telegramToken: token, status: "ACTIVE" },
+            where: {
+                OR: [
+                    { telegramToken: token },
+                    { telegramToken: rawToken }
+                ],
+                status: "ACTIVE"
+            },
         });
 
         if (!botIntegration) {
-            console.error(`No active merchant found for token ${token.substring(0, 10)}... Skipping.`);
+            console.error(`No active merchant found for token ${rawToken.substring(0, 10)}... Skipping.`);
             return;
         }
 
         const merchantId = botIntegration.userId;
-        const bot = new TelegramBot(token, { polling: true });
+        const bot = new TelegramBot(rawToken, { polling: true });
 
         // ─── Helper: Ensure customer exists ───────────────────────────────────
         const ensureCustomer = async (from: TelegramBot.User | undefined, chatId: number) => {
@@ -486,7 +498,7 @@ export async function startBotForToken(token: string) {
             console.error(`Polling error [${token.substring(0, 5)}...]:`, error.code ?? error.message);
         });
 
-        botRegistry[token] = { bot, userId: merchantId };
+        botRegistry[rawToken] = { bot, userId: merchantId };
         console.log(`✅ Telegram Bot started for merchant ${merchantId}`);
     } catch (err) {
         console.error(`Failed to start Telegram Bot for token ${token}`, err);

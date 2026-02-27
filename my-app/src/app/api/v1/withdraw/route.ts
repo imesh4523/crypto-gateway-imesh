@@ -55,7 +55,7 @@ export async function POST(req: Request) {
 
     } catch (error: any) {
         console.error('Submit withdrawal error:', error);
-        if (error.message === 'Insufficient balance' || error.message === 'User not found') {
+        if (error.message === 'Insufficient balance' || error.message === 'User not found' || error.message === 'Insufficient balance or user not found') {
             return NextResponse.json({ error: error.message }, { status: 400 });
         }
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

@@ -1,6 +1,40 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+// Helper: apply plan upgrade quotas to user
+async function applyPlanUpgrade(userId: string, planId: string) {
+    let botClicksQuota = 500;
+    let hostingPowerLimit = 1.0;
+    let productLimitQuota = 10;
+    let trialActive = true;
+
+    if (planId === 'PRO') {
+        botClicksQuota = 50000;
+        hostingPowerLimit = 2.0;
+        productLimitQuota = 500;
+        trialActive = false;
+    } else if (planId === 'PREMIUM') {
+        botClicksQuota = 1000000;
+        hostingPowerLimit = 4.0;
+        productLimitQuota = 10000;
+        trialActive = false;
+    }
+
+    if (['PRO', 'PREMIUM'].includes(planId)) {
+        await prisma.user.update({
+            where: { id: userId },
+            data: {
+                plan: planId as any,
+                botClicksQuota,
+                hostingPowerLimit,
+                productLimitQuota,
+                trialActive,
+            },
+        });
+        console.log(`[Simulate] User ${userId} upgraded to ${planId}.`);
+    }
+}
+
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
         const routeParams = await params;
@@ -34,9 +68,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
                 where: { id: invoice.transaction.id },
                 data: { status: 'SUCCESS' }
             });
+        }
 
-            // Test mode simulation should not increment real merchant balance.
-            // Balance logic removed entirely for simulated test transactions.
+        // 3. AUTO PLAN UPGRADE: If this was a plan upgrade invoice, apply it
+        if (invoice.orderId && invoice.orderId.startsWith('PLAN_UPGRADE:')) {
+            const planId = invoice.orderId.replace('PLAN_UPGRADE:', '');
+            await applyPlanUpgrade(invoice.userId, planId);
         }
 
         return NextResponse.json({ success: true });

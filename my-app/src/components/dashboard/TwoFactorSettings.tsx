@@ -63,82 +63,97 @@ export function TwoFactorSettings({ initiallyEnabled }: { initiallyEnabled: bool
     };
 
     return (
-        <div className="bg-white/40 dark:bg-white/10 border border-white/50 dark:border-white/5 backdrop-blur-md p-8 rounded-[32px] shadow-sm relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-indigo-500/10 transition-all pointer-events-none" />
+        <div className="bg-white/40 dark:bg-white/5 border border-white/50 dark:border-white/10 backdrop-blur-xl p-8 rounded-[32px] shadow-sm relative overflow-hidden group hover:shadow-emerald-500/10 transition-all duration-500">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-emerald-500/10 transition-all pointer-events-none" />
 
             <div className="flex items-center gap-4 mb-8 border-b border-white/40 dark:border-white/10 pb-6 relative">
                 <div className={cn(
-                    "w-10 h-10 rounded-2xl flex items-center justify-center",
-                    enabled ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-slate-500/10 text-slate-400 dark:text-slate-500"
+                    "w-11 h-11 rounded-2xl flex items-center justify-center border transition-colors",
+                    enabled
+                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/10"
+                        : "bg-slate-500/10 text-slate-400 dark:text-slate-500 border-slate-500/10"
                 )}>
                     <Shield className="w-5 h-5" />
                 </div>
-                <h3 className="text-xl font-black text-[#1a1f36] dark:text-white tracking-tight">Two-Factor Auth</h3>
+                <div>
+                    <h3 className="text-xl font-black text-[#1a1f36] dark:text-white tracking-tight">Two-Factor Auth</h3>
+                    <p className="text-[11px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">Enhanced Security</p>
+                </div>
             </div>
 
             {enabled ? (
-                <div className="space-y-6">
-                    <div className="flex items-center gap-3 px-4 py-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 rounded-2xl text-[13px] font-black">
-                        <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
-                        2FA is Active and protecting your account.
+                <div className="space-y-6 animate-in fade-in slide-in-from-left-4 duration-500">
+                    <div className="flex items-center gap-4 px-5 py-5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 rounded-2xl text-[14px] font-bold">
+                        <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-white shadow-lg shadow-emerald-500/30">
+                            <CheckCircle2 className="w-5 h-5" />
+                        </div>
+                        2FA is active and protecting your account.
                     </div>
-                    {status && <p className="text-sm font-bold text-slate-700 dark:text-slate-300 bg-white/50 dark:bg-white/5 p-4 rounded-xl border border-white/20">{status}</p>}
                 </div>
             ) : !isSettingUp ? (
-                <div className="space-y-8">
-                    <p className="text-[13px] text-slate-500 dark:text-slate-400 font-bold leading-relaxed">
-                        Enhance your account security by requiring a 6-digit verification code from your authenticator app (Google Authenticator, Authy, etc.) whenever you sign in.
+                <div className="space-y-8 animate-in fade-in slide-in-from-left-4 duration-500">
+                    <p className="text-[13px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
+                        Add an extra layer of security to your account. We'll ask for a code from your authenticator app when you log in.
                     </p>
-                    {status && <p className="text-sm text-rose-500 dark:text-rose-400 font-bold bg-rose-500/5 p-3 rounded-xl border border-rose-500/10">{status}</p>}
                     <button
                         onClick={generate2FA}
                         disabled={loading}
-                        className="w-full flex items-center justify-center py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black transition-all disabled:opacity-50 shadow-lg shadow-indigo-600/20"
+                        className="w-full flex items-center justify-center py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black transition-all disabled:opacity-50 shadow-lg shadow-indigo-600/20 group/btn"
                     >
-                        <Lock className="w-4 h-4 mr-2 stroke-[3]" /> {loading ? "Generating..." : "Enable 2FA Protection"}
+                        <Lock className="w-4 h-4 mr-2 group-hover/btn:scale-110 transition-transform" /> {loading ? "Generating Setup..." : "Enable 2FA Protection"}
                     </button>
                 </div>
             ) : (
-                <div className="space-y-6 animate-in fade-in zoom-in-95 duration-200">
-                    <div className="space-y-4">
-                        <p className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Step 1: Scan QR Code</p>
-                        <div className="bg-white p-4 rounded-[24px] inline-block shadow-inner border border-slate-100">
+                <div className="space-y-8 animate-in fade-in zoom-in-95 duration-300">
+                    <div className="space-y-5">
+                        <div className="flex items-center gap-2">
+                            <span className="w-6 h-6 rounded-full bg-indigo-600 text-white text-[10px] flex items-center justify-center font-bold">1</span>
+                            <p className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Scan QR Code</p>
+                        </div>
+
+                        <div className="bg-white p-5 rounded-[32px] inline-block shadow-xl border border-slate-100 dark:border-white/5 mx-auto">
                             {qrCodeUrl && (
-                                <img src={qrCodeUrl} alt="2FA QR Code" className="w-32 h-32" />
+                                <img src={qrCodeUrl} alt="2FA QR Code" className="w-40 h-40 mix-blend-multiply dark:mix-blend-normal" />
                             )}
                         </div>
-                        <div className="flex flex-col gap-1">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Manual Entry Key</label>
-                            <code className="text-[11px] text-indigo-600 dark:text-indigo-400 font-mono font-bold bg-indigo-500/5 px-2 py-1 rounded w-fit">{secret}</code>
+
+                        <div className="bg-slate-50 dark:bg-black/20 p-4 rounded-2xl border border-slate-100 dark:border-white/5">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Manual Entry Key</label>
+                            <code className="text-[13px] text-indigo-600 dark:text-indigo-400 font-mono font-black break-all">{secret}</code>
                         </div>
                     </div>
 
-                    <form onSubmit={verify2FA} className="space-y-6 pt-4 border-t border-white/40 dark:border-white/10">
-                        <p className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Step 2: Verify Token</p>
+                    <form onSubmit={verify2FA} className="space-y-6 pt-6 border-t border-white/40 dark:border-white/10">
+                        <div className="flex items-center gap-2">
+                            <span className="w-6 h-6 rounded-full bg-indigo-600 text-white text-[10px] flex items-center justify-center font-bold">2</span>
+                            <p className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Verify Token</p>
+                        </div>
+
                         <input
                             type="text"
                             required minLength={6} maxLength={6}
                             placeholder="000 000"
                             value={token}
                             onChange={(e) => setToken(e.target.value)}
-                            className="w-full bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-4 text-[#1a1f36] dark:text-white font-mono tracking-[0.5em] text-center text-xl font-black focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-inner"
+                            className="w-full bg-white dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-5 text-[#1a1f36] dark:text-white font-mono tracking-[0.4em] text-center text-2xl font-black focus:outline-none focus:ring-2 focus:ring-indigo-500/30 shadow-sm"
                         />
-                        {status && <p className="text-sm text-rose-500 dark:text-rose-400 font-bold bg-rose-500/5 p-3 rounded-xl border border-rose-500/10">{status}</p>}
 
-                        <div className="flex gap-3 pt-2">
+                        {status && <div className="p-4 rounded-2xl bg-rose-500/5 border border-rose-500/10 text-rose-500 text-sm font-bold animate-in shake duration-300">{status}</div>}
+
+                        <div className="flex gap-4 pt-2">
                             <button
                                 type="button"
                                 onClick={() => setIsSettingUp(false)}
-                                className="flex-1 py-3.5 rounded-xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-white font-black transition-all border border-slate-200 dark:border-white/10"
+                                className="flex-1 py-4 rounded-2xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-white font-black transition-all border border-slate-200 dark:border-white/10"
                             >
                                 Cancel
                             </button>
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="flex-1 py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black transition-all flex items-center justify-center disabled:opacity-50 shadow-lg shadow-indigo-600/20"
+                                className="flex-2 py-4 px-6 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black transition-all flex items-center justify-center disabled:opacity-50 shadow-lg shadow-indigo-600/20"
                             >
-                                Verify & Activate
+                                {loading ? "Verifying..." : "Verify & Activate"}
                             </button>
                         </div>
                     </form>

@@ -75,3 +75,5 @@ Unknown argument `brandName`. Available options are marked with ?.
 [2026-02-26T18:33:10.581Z] Raw Update Success for cmm1qass400087dr88ya49fsm
 [2026-02-27T05:26:37.227Z] Body: {"brandName":"","brandLogoUrl":"","themeBgColor":"#20252d","themeCardColor":"#ffffff","enabledCryptoWallet":false,"enabledBinancePay":true}, User: cmm1qass400087dr88ya49fsm
 [2026-02-27T05:26:37.905Z] Raw Update Success for cmm1qass400087dr88ya49fsm
+[2026-02-27T11:04:15.266Z] Body: {"brandName":"","brandLogoUrl":"","themeBgColor":"#20252d","themeCardColor":"#ffffff","enabledCryptoWallet":true,"enabledBinancePay":true}, User: cmm1qass400087dr88ya49fsm
+[2026-02-27T11:04:17.585Z] Raw Update Success for cmm1qass400087dr88ya49fsm

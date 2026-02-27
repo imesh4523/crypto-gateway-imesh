@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import crypto from 'crypto';
+import { decrypt } from '@/lib/encryption';
 
 // The IPN secret key configured in NowPayments Dashboard for our Master Account
 const IPN_SECRET = process.env.NOWPAYMENTS_IPN_SECRET || 'your-ipn-secret';
@@ -89,7 +90,46 @@ export async function POST(req: Request) {
                 data: { status: 'COMPLETED' }
             });
 
-            // Auto-fulfill Bot Payments
+            // ============================================================
+            // AUTO PLAN UPGRADE: Detect bot subscription payment
+            // orderId format: "PLAN_UPGRADE:PRO" or "PLAN_UPGRADE:PREMIUM"
+            // ============================================================
+            if (invoice.orderId && invoice.orderId.startsWith('PLAN_UPGRADE:')) {
+                const planId = invoice.orderId.replace('PLAN_UPGRADE:', '');
+
+                let botClicksQuota = 500;
+                let hostingPowerLimit = 1.0;
+                let productLimitQuota = 10;
+                let trialActive = true;
+
+                if (planId === 'PRO') {
+                    botClicksQuota = 50000;
+                    hostingPowerLimit = 2.0;
+                    productLimitQuota = 500;
+                    trialActive = false;
+                } else if (planId === 'PREMIUM') {
+                    botClicksQuota = 1000000;
+                    hostingPowerLimit = 4.0;
+                    productLimitQuota = 10000;
+                    trialActive = false;
+                }
+
+                if (['PRO', 'PREMIUM'].includes(planId)) {
+                    await prisma.user.update({
+                        where: { id: invoice.userId },
+                        data: {
+                            plan: planId as any,
+                            botClicksQuota,
+                            hostingPowerLimit,
+                            productLimitQuota,
+                            trialActive,
+                        },
+                    });
+                    console.log(`[Plan Upgrade] User ${invoice.userId} upgraded to ${planId} after payment.`);
+                }
+            }
+
+            // Auto-fulfill Bot Deposits
             if (invoice.orderId && invoice.orderDescription?.startsWith("Bot Deposit")) {
                 // @ts-ignore
                 const botPayment = await prisma.botPayment.update({
@@ -144,8 +184,9 @@ export async function POST(req: Request) {
 
                 // Generate Signature if merchant has a secret
                 let signatureHeader = {};
-                if (updatedMerchant.webhookSecret) {
-                    const hmac = crypto.createHmac('sha512', updatedMerchant.webhookSecret);
+                const rawMerchantSecret = decrypt(updatedMerchant.webhookSecret);
+                if (rawMerchantSecret) {
+                    const hmac = crypto.createHmac('sha512', rawMerchantSecret);
                     hmac.update(JSON.stringify(merchantPayload));
                     const signature = hmac.digest('hex');
                     signatureHeader = { 'x-soltio-signature': signature };

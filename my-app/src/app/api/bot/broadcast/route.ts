@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+import { decrypt } from "@/lib/encryption";
 import TelegramBot from "node-telegram-bot-api";
 
 export async function POST(req: Request) {
@@ -9,6 +10,9 @@ export async function POST(req: Request) {
     if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const user = await (prisma as any).user.findUnique({ where: { email: session.user.email }, include: { BotIntegration: true } });
     if (!user || !user.BotIntegration?.telegramToken) return NextResponse.json({ error: "No bot integrated" }, { status: 400 });
+
+    const decryptedTelegramToken = decrypt(user.BotIntegration.telegramToken);
+    if (!decryptedTelegramToken) return NextResponse.json({ error: "No bot integrated" }, { status: 400 });
 
     const formData = await req.formData();
     const content = formData.get("content") as string;
@@ -42,7 +46,7 @@ export async function POST(req: Request) {
         }
     });
 
-    const bot = new TelegramBot(user.BotIntegration.telegramToken);
+    const bot = new TelegramBot(decryptedTelegramToken);
 
     // Fetch customers
     const customers = await (prisma as any).botCustomer.findMany({ where: { userId: user.id } });

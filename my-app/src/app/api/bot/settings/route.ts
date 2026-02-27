@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 import { startBotForToken } from "@/lib/botManager";
+import { encrypt } from "@/lib/encryption";
 
 export async function POST(req: Request) {
     try {
@@ -22,21 +23,26 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "User not found" }, { status: 404 });
         }
 
+        // Encrypt the sensitive tokens before saving
+        const encryptedTelegramToken = encrypt(telegramToken);
+        const encryptedBinanceApiKey = encrypt(binanceApiKey);
+        const encryptedBinanceSecretKey = encrypt(binanceSecretKey);
+
         await (prisma as any).botIntegration.upsert({
             where: { userId: user.id },
             update: {
-                telegramToken,
+                telegramToken: encryptedTelegramToken,
                 binancePayId,
-                binanceApiKey,
-                binanceSecretKey,
+                binanceApiKey: encryptedBinanceApiKey,
+                binanceSecretKey: encryptedBinanceSecretKey,
                 status: "ACTIVE",
             },
             create: {
                 userId: user.id,
-                telegramToken,
+                telegramToken: encryptedTelegramToken,
                 binancePayId,
-                binanceApiKey,
-                binanceSecretKey,
+                binanceApiKey: encryptedBinanceApiKey,
+                binanceSecretKey: encryptedBinanceSecretKey,
                 status: "ACTIVE",
             }
         });

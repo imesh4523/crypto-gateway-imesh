@@ -85,7 +85,7 @@ export async function POST(req: Request) {
         });
 
         // The checkout URL will be on our domain, not NowPayments
-        const checkoutUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/checkout/${invoice.id}`;
+        const checkoutUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/pay/${invoice.id}`;
 
         // 4. Return the generated invoice details to the Merchant
         return NextResponse.json({

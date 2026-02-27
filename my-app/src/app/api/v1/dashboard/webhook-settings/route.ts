@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { encrypt, decrypt } from '@/lib/encryption';
 
 export async function POST(req: Request) {
     try {
@@ -15,11 +16,13 @@ export async function POST(req: Request) {
         const { webhookUrl, action } = body;
 
         if (action === 'REGENERATE_SECRET') {
+            const rawSecret = 'whsec_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+            const encryptedSecret = encrypt(rawSecret);
             const updatedUser = await prisma.user.update({
                 where: { id: userId },
-                data: { webhookSecret: 'whsec_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) }
+                data: { webhookSecret: encryptedSecret }
             });
-            return NextResponse.json({ success: true, webhookSecret: updatedUser.webhookSecret });
+            return NextResponse.json({ success: true, webhookSecret: rawSecret });
         }
 
         if (action === 'REGENERATE_PUBLIC_KEY') {
@@ -70,7 +73,8 @@ export async function GET() {
         const updateData: any = {};
 
         if (!user.webhookSecret) {
-            updateData.webhookSecret = 'whsec_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+            const rawSecret = 'whsec_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+            updateData.webhookSecret = encrypt(rawSecret);
             needsUpdate = true;
         }
 
@@ -85,6 +89,11 @@ export async function GET() {
                 data: updateData,
                 select: { webhookUrl: true, webhookSecret: true, publicKey: true }
             });
+        }
+
+        // Decrypt for UI display
+        if (user.webhookSecret) {
+            user.webhookSecret = decrypt(user.webhookSecret);
         }
 
         return NextResponse.json({ success: true, data: user });

@@ -46,7 +46,7 @@ export default async function DepositPageWrapper({ searchParams }: { searchParam
         });
 
         if (existingInvoice) {
-            redirect(`/checkout/${existingInvoice.id}`);
+            redirect(`/pay/${existingInvoice.id}`);
         }
     }
 
@@ -79,5 +79,5 @@ export default async function DepositPageWrapper({ searchParams }: { searchParam
         }
     });
 
-    redirect(`/checkout/${invoice.id}`);
+    redirect(`/pay/${invoice.id}`);
 }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
-import { Copy, Save, CheckCircle2, QrCode, MonitorSmartphone, Palette, Check, ImageIcon, Type, Loader2, Upload, Trash2, ShieldCheck, Globe } from "lucide-react";
+import { Copy, Save, CheckCircle2, QrCode, MonitorSmartphone, Palette, Check, ImageIcon, Type, Loader2, Upload, Trash2, ShieldCheck, Globe, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function CheckoutCustomizer() {
@@ -11,6 +11,7 @@ export default function CheckoutCustomizer() {
     const [primaryColor, setPrimaryColor] = useState("#6366f1"); // Indigo
     const [backgroundColor, setBackgroundColor] = useState("#0f172a"); // Slate 900
     const [borderRadius, setBorderRadius] = useState("16px");
+    const [publicKey, setPublicKey] = useState("");
     const [saved, setSaved] = useState(false);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -36,6 +37,7 @@ export default function CheckoutCustomizer() {
                 setBackgroundColor(data.data.themeBgColor || "#0f172a");
                 setShowCryptoWallet(data.data.enabledCryptoWallet !== false);
                 setShowBinancePay(data.data.enabledBinancePay !== false);
+                setPublicKey(data.data.publicKey || "");
                 // Theme colors can be added to prisma later if needed, 
                 // for now using existing background color state.
             }
@@ -312,6 +314,38 @@ export default function CheckoutCustomizer() {
                         </div>
                     </Card>
 
+                    <div className="bg-indigo-500/5 border border-indigo-500/10 rounded-3xl p-6 text-sm relative overflow-hidden group/link">
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full blur-2xl -mr-12 -mt-12 transition-all" />
+                        <div className="relative z-10">
+                            <label className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest font-black block mb-3">Your Payment Link</label>
+                            <div className="flex gap-2">
+                                <div className="flex-1 bg-white/50 dark:bg-black/40 border border-slate-200 dark:border-white/5 rounded-xl px-4 py-2.5 font-bold text-xs text-slate-600 dark:text-slate-400 flex items-center gap-2 overflow-hidden truncate">
+                                    <Globe className="w-3.5 h-3.5 shrink-0" />
+                                    <span className="truncate">{typeof window !== 'undefined' ? `${window.location.origin}/store/${publicKey}` : `/store/${publicKey}`}</span>
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        const url = `${window.location.origin}/store/${publicKey}`;
+                                        navigator.clipboard.writeText(url);
+                                        // Simple alert for now, can be improved with a toast
+                                        alert("Link copied to clipboard!");
+                                    }}
+                                    className="p-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-500 hover:text-indigo-600 transition-colors shadow-sm"
+                                >
+                                    <Copy className="w-4 h-4" />
+                                </button>
+                                <a
+                                    href={`/store/${publicKey}`}
+                                    target="_blank"
+                                    className="p-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-600/20"
+                                >
+                                    <ExternalLink className="w-4 h-4" />
+                                </a>
+                            </div>
+                            <p className="text-[10px] text-slate-400 mt-3 font-bold">Use this link to receive direct payments without any integration.</p>
+                        </div>
+                    </div>
+
                     <div className="bg-indigo-500/5 border border-indigo-500/10 rounded-2xl p-5 text-sm text-indigo-700 dark:text-indigo-300 flex gap-4 items-start shadow-sm">
                         <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center flex-shrink-0">
                             <MonitorSmartphone className="w-5 h-5" />
@@ -325,13 +359,22 @@ export default function CheckoutCustomizer() {
 
                 {/* Right Side: Live Preview */}
                 <div className="flex flex-col h-full">
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                        <span className="relative flex h-3 w-3">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-                        </span>
-                        Live Preview
-                    </h3>
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <span className="relative flex h-3 w-3">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                            </span>
+                            Live Preview
+                        </h3>
+                        <a
+                            href={`/store/${publicKey}`}
+                            target="_blank"
+                            className="text-[11px] font-black text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5 hover:underline"
+                        >
+                            Open Hosted Page <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                    </div>
 
                     <div className="bg-slate-200/50 dark:bg-black/20 rounded-[2.5rem] p-4 sm:p-8 border border-white/20 shadow-inner flex items-center justify-center min-h-[700px] w-full relative overflow-hidden">
                         {/* Background Decor */}

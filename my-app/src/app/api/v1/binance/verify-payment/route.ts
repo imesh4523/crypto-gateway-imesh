@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import crypto from 'crypto';
+import { decrypt } from '@/lib/encryption';
 
 export async function POST(req: Request) {
     try {
@@ -27,7 +28,10 @@ export async function POST(req: Request) {
         const amount = Number(invoice.amount);
         const pendingNote = invoice.transaction?.providerTxId || '';
 
-        if (!botIntegration.binanceApiKey || !botIntegration.binanceSecretKey) {
+        const decryptedBinanceApiKey = decrypt(botIntegration.binanceApiKey);
+        const decryptedBinanceSecretKey = decrypt(botIntegration.binanceSecretKey);
+
+        if (!decryptedBinanceApiKey || !decryptedBinanceSecretKey) {
             return NextResponse.json({
                 success: false,
                 error: 'api_keys_missing',
@@ -45,7 +49,7 @@ export async function POST(req: Request) {
 
         // HMAC SHA256 signature
         const signature = crypto
-            .createHmac('sha256', botIntegration.binanceSecretKey)
+            .createHmac('sha256', decryptedBinanceSecretKey)
             .update(queryString)
             .digest('hex');
 
@@ -68,7 +72,7 @@ export async function POST(req: Request) {
                     `${base}/sapi/v1/pay/transactions?${queryString}&signature=${signature}`,
                     {
                         method: 'GET',
-                        headers: { 'X-MBX-APIKEY': botIntegration.binanceApiKey },
+                        headers: { 'X-MBX-APIKEY': decryptedBinanceApiKey },
                         signal: AbortSignal.timeout(5000)
                     }
                 );

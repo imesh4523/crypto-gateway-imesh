@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
-import { Copy, Plus, Key, EyeOff, Eye, ShieldCheck, Trash2, Check } from "lucide-react";
+import { Copy, Plus, Key, EyeOff, Eye, ShieldCheck, Trash2, Check, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -26,7 +26,7 @@ export default function ApiKeysPage() {
     const [environment, setEnvironment] = useState<'live' | 'test'>('live');
 
     useEffect(() => {
-        const storedMode = localStorage.getItem("isTestMode");
+        const storedMode = typeof window !== 'undefined' ? localStorage.getItem("isTestMode") : null;
         const mode = storedMode === "true" ? 'test' : 'live';
         setEnvironment(mode);
         fetchData(mode);
@@ -49,8 +49,6 @@ export default function ApiKeysPage() {
                 setWebhookSecret(webhookData.data.webhookSecret);
                 setPublicKey(webhookData.data.publicKey);
                 setWebhookUrl(webhookData.data.webhookUrl || "");
-            } else if (webhookData.error === 'DATABASE_MIGRATION_REQUIRED' || webhookData.webhookSecret === 'ACCOUNT_NOT_FOUND') {
-                console.warn("Account mismatch after migration. Please re-register.");
             }
         } catch (error) {
             console.error("Failed to fetch data", error);
@@ -140,7 +138,7 @@ export default function ApiKeysPage() {
     if (loading) return <div className="text-white p-8 animate-pulse text-center">Loading Keys...</div>;
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500">
+        <div className="space-y-6 animate-in fade-in duration-500">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
                 <div>
                     <h1 className="text-4xl font-black text-[#1a1f36] dark:text-white tracking-tight">
@@ -166,19 +164,19 @@ export default function ApiKeysPage() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Public Identity Card */}
-                <Card className="bg-white/40 dark:bg-white/10 border border-white/50 dark:border-white/5 backdrop-blur-md p-8 rounded-[32px] overflow-hidden relative group shadow-sm">
+                <Card className="bg-white/40 dark:bg-white/10 border border-white/50 dark:border-white/5 backdrop-blur-md p-6 rounded-[32px] overflow-hidden relative group shadow-sm">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-emerald-500/20 transition-all" />
                     <div className="flex items-start gap-5 relative z-10">
                         <div className="w-14 h-14 rounded-3xl bg-emerald-600/10 dark:bg-emerald-500/20 flex flex-shrink-0 items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-inner">
                             <Key className="w-7 h-7" />
                         </div>
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0">
                             <h3 className="text-xl font-black text-[#1a1f36] dark:text-white mb-1 tracking-tight">Public Key</h3>
                             <p className="text-[13px] text-slate-500 dark:text-slate-400 mb-4 font-bold max-w-md leading-relaxed">Your unique identifier for client-side SDKs and payment widgets.</p>
-                            <div className="bg-white dark:bg-black/40 border border-slate-200 dark:border-white/10 px-5 py-3 rounded-2xl font-mono text-xs text-slate-700 dark:text-slate-300 tracking-wider flex justify-between items-center shadow-inner">
-                                <span className="font-bold">{publicKey || "Loading..."}</span>
+                            <div className="bg-white dark:bg-black/40 border border-slate-200 dark:border-white/10 px-5 py-2.5 rounded-2xl font-mono text-xs text-slate-700 dark:text-slate-300 tracking-wider flex justify-between items-center shadow-inner h-[46px]">
+                                <span className="font-bold truncate">{publicKey || "Loading..."}</span>
                                 <button
                                     onClick={() => handleCopy(publicKey, "public")}
                                     className="ml-4 p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-all text-slate-400 hover:text-emerald-600 dark:hover:text-white"
@@ -191,36 +189,32 @@ export default function ApiKeysPage() {
                 </Card>
 
                 {/* Webhook Shield Card */}
-                <Card className="bg-white/40 dark:bg-white/10 border border-white/50 dark:border-white/5 backdrop-blur-md p-8 rounded-[32px] overflow-hidden relative group shadow-sm">
+                <Card className="bg-white/40 dark:bg-white/10 border border-white/50 dark:border-white/5 backdrop-blur-md p-6 rounded-[32px] overflow-hidden relative group shadow-sm">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-indigo-500/20 transition-all" />
                     <div className="flex items-start gap-5 relative z-10">
                         <div className="w-14 h-14 rounded-3xl bg-indigo-600/10 dark:bg-indigo-500/20 flex flex-shrink-0 items-center justify-center text-indigo-600 dark:text-indigo-400 shadow-inner">
                             <ShieldCheck className="w-7 h-7" />
                         </div>
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0">
                             <h3 className="text-xl font-black text-[#1a1f36] dark:text-white mb-1 tracking-tight">Webhook Secret</h3>
                             <p className="text-[13px] text-slate-500 dark:text-slate-400 mb-4 font-bold max-w-md leading-relaxed">Used to verify that webhook payload signatures were sent by Soltio securely.</p>
-                            <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
-                                <div className="bg-white dark:bg-black/40 border border-slate-200 dark:border-white/10 px-5 py-3 rounded-2xl font-mono text-xs text-slate-700 dark:text-slate-300 tracking-wider flex-1 flex justify-between items-center shadow-inner min-w-[200px] w-full">
-                                    <span className="font-bold">{isWebhookRevealed ? webhookSecret : "whsec_••••••••••••••••••••••••••••"}</span>
+                            <div className="bg-white dark:bg-black/40 border border-slate-200 dark:border-white/10 px-5 py-2.5 rounded-2xl font-mono text-xs text-slate-700 dark:text-slate-300 tracking-wider flex justify-between items-center shadow-inner h-[46px]">
+                                <span className="font-bold truncate mr-2">{isWebhookRevealed ? webhookSecret : "whsec_••••••••••••••••••••••••••••"}</span>
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                    <button
+                                        onClick={() => setIsWebhookRevealed(!isWebhookRevealed)}
+                                        className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-all text-slate-400 hover:text-indigo-600 dark:hover:text-white"
+                                        title={isWebhookRevealed ? "Hide" : "Reveal"}
+                                    >
+                                        {isWebhookRevealed ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                    </button>
                                     <button
                                         onClick={() => handleCopy(webhookSecret, "webhook")}
-                                        className="ml-4 p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-all text-slate-400 hover:text-indigo-600 dark:hover:text-white"
+                                        className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-all text-slate-400 hover:text-indigo-600 dark:hover:text-white"
                                     >
                                         {copiedId === "webhook" ? <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> : <Copy className="w-4 h-4" />}
                                     </button>
                                 </div>
-                                <Button
-                                    variant="outline"
-                                    onClick={() => setIsWebhookRevealed(!isWebhookRevealed)}
-                                    className="border-white/50 dark:border-white/10 bg-white/40 dark:bg-white/5 backdrop-blur-md hover:bg-white/60 dark:hover:bg-white/10 w-full sm:w-auto text-slate-700 dark:text-white rounded-2xl font-black px-6 h-[46px]"
-                                >
-                                    {isWebhookRevealed ? (
-                                        <><EyeOff className="w-4 h-4 mr-2 stroke-[3]" /> Hide</>
-                                    ) : (
-                                        <><Eye className="w-4 h-4 mr-2 stroke-[3]" /> Reveal</>
-                                    )}
-                                </Button>
                             </div>
 
                             <div className="mt-6 pt-6 border-t border-white/20">
@@ -233,12 +227,12 @@ export default function ApiKeysPage() {
                                         value={webhookUrl}
                                         onChange={(e) => setWebhookUrl(e.target.value)}
                                         placeholder="https://your-site.com/api/webhook"
-                                        className="flex-1 bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-[#1a1f36] dark:text-white text-sm font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-inner"
+                                        className="flex-1 bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2 text-[#1a1f36] dark:text-white text-sm font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-inner"
                                     />
                                     <Button
                                         onClick={handleSaveWebhook}
                                         disabled={savingWebhook}
-                                        className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-black px-6 h-[46px] shadow-lg shadow-indigo-600/20"
+                                        className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-black px-6 h-[42px] shadow-lg shadow-indigo-600/20 shrink-0"
                                     >
                                         {savingWebhook ? "Saving..." : "Save URL"}
                                     </Button>

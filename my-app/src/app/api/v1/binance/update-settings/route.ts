@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { prisma } from '@/lib/prisma';
+import { encrypt } from '@/lib/encryption';
 
 export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
@@ -14,20 +15,23 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Binance Pay ID is required' }, { status: 400 });
     }
 
+    const encryptedApiKey = encrypt(binanceApiKey);
+    const encryptedSecretKey = encrypt(binanceSecretKey);
+
     // Upsert BotIntegration record (we reuse same model to store Binance credentials per merchant)
     await prisma.botIntegration.upsert({
         where: { userId },
         create: {
             userId,
             binancePayId,
-            binanceApiKey: binanceApiKey || null,
-            binanceSecretKey: binanceSecretKey || null,
+            binanceApiKey: encryptedApiKey || null,
+            binanceSecretKey: encryptedSecretKey || null,
             status: 'ACTIVE',
         },
         update: {
             binancePayId,
-            binanceApiKey: binanceApiKey || null,
-            binanceSecretKey: binanceSecretKey || null,
+            binanceApiKey: encryptedApiKey || null,
+            binanceSecretKey: encryptedSecretKey || null,
         },
     });
 

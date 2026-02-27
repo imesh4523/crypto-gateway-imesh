@@ -15,7 +15,7 @@ export async function GET(req: Request) {
 
         // Using raw SQL to bypass outdated Prisma client dmmf
         const users: any[] = await prisma.$queryRawUnsafe(
-            `SELECT "brandName", "brandLogoUrl", "themeBgColor", "themeCardColor", "enabledCryptoWallet", "enabledBinancePay" FROM "User" WHERE "id" = $1`,
+            `SELECT "brandName", "brandLogoUrl", "themeBgColor", "themeCardColor", "enabledCryptoWallet", "enabledBinancePay", "publicKey" FROM "User" WHERE "id" = $1`,
             userId
         );
 

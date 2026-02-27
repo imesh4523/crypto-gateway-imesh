@@ -14,6 +14,7 @@ datasource db {
 enum Role {
   MERCHANT
   ADMIN
+  AGENT
 }
 
 enum TransactionStatus {
@@ -21,6 +22,8 @@ enum TransactionStatus {
   SUCCESS
   FAILED
   EXPIRED
+  REFUNDED
+  PARTIALLY_REFUNDED
 }
 
 enum WithdrawalStatus {
@@ -28,6 +31,12 @@ enum WithdrawalStatus {
   APPROVED
   REJECTED
   COMPLETED
+}
+
+enum BillingPlan {
+  FREE
+  PRO
+  PREMIUM
 }
 
 // ============================================
@@ -47,6 +56,7 @@ model User {
   // 2FA Support
   twoFactorEnabled Boolean @default(false)
   twoFactorSecret  String?
+  isSuspended      Boolean @default(false)
 
   // Merchant Balances (Stored as Decimals for precision)
   availableBalance Decimal @default(0.0)
@@ -57,12 +67,14 @@ model User {
   testBalance Decimal @default(0.0)
 
   // Telegram Bot Integration / Free Trial
-  botIntegrationEnabled Boolean   @default(false)
-  trialActive           Boolean   @default(true)
+  botIntegrationEnabled Boolean     @default(false)
+  trialActive           Boolean     @default(true)
+  plan                  BillingPlan @default(FREE)
   trialExpiresAt        DateTime?
-  botClicksQuota        Int       @default(500) // Lifetime clicks allowed in free trial
-  botClicksUsed         Int       @default(0) // Total clicks consumed
-  hostingPowerLimit     Decimal   @default(1.0) // Virtual CPU / Compute allocation
+  botClicksQuota        Int         @default(500) // Lifetime clicks allowed in free trial
+  botClicksUsed         Int         @default(0) // Total clicks consumed
+  hostingPowerLimit     Decimal     @default(1.0) // Virtual CPU / Compute allocation
+  productLimitQuota     Int         @default(10) // Max products allowed in bot
 
   // Webhook & API Identity
   webhookUrl    String?
@@ -87,6 +99,7 @@ model User {
   invoices     Invoice[]
   withdrawals  Withdrawal[]
   loginHistory LoginHistory[]
+  refunds      Refund[]
 
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
@@ -184,6 +197,8 @@ model Transaction {
 
   userId   String
   merchant User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  refunds  Refund[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -392,4 +407,45 @@ model BotBroadcastMessage {
   merchant    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt   DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  adminId   String
+  adminName String?
+  action    String   // e.g., "UPDATE_MERCHANT_BALANCE"
+  targetId  String?  // ID of the target resource (e.g., merchant user ID)
+  details   String?  @db.Text
+  ipAddress String?
+  createdAt DateTime @default(now())
+}
+
+model IpBlacklist {
+  id        String   @id @default(cuid())
+  ipAddress String   @unique
+  reason    String?
+  createdAt DateTime @default(now())
+}
+
+model Refund {
+  id            String   @id @default(cuid())
+  transactionId String
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  
+  amount        Decimal
+  reason        String?
+  status        String   @default("PENDING") // PENDING, COMPLETED, REJECTED
+  txHash        String?  // Blockchain hash for the refund if applicable
+  
+  userId        String
+  merchant      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+model SystemSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
 }

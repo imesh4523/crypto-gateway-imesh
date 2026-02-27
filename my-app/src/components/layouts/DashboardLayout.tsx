@@ -19,6 +19,7 @@ const sidebarLinks = [
     { name: "Withdrawals", href: "/dashboard/withdrawals", icon: ArrowRightLeft },
     { name: "Telegram Bot", href: "/dashboard/bot", icon: Puzzle },
     { name: "Settings", href: "/dashboard/settings", icon: Settings },
+    { name: "Admin Central", href: "/admin", icon: ShieldCheck, adminOnly: true },
 ];
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -66,6 +67,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
                 <nav className="flex-1 py-6 px-3 space-y-1">
                     {sidebarLinks.map((link) => {
+                        if ((link as any).adminOnly && (session?.user as any)?.role !== "ADMIN") {
+                            return null;
+                        }
                         const isActive = pathname === link.href;
                         const Icon = link.icon;
 
@@ -124,27 +128,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                     </div>
 
                     <div className="flex items-center gap-6">
-                        {/* Environment Toggle */}
-                        <div className="flex items-center bg-white/40 dark:bg-slate-800/60 backdrop-blur-md p-1 rounded-xl border border-white/40 dark:border-white/5 shadow-sm">
-                            <button
-                                onClick={toggleTestMode}
-                                className={cn(
-                                    "px-3 py-1 text-[11px] font-bold rounded-lg transition-all flex items-center gap-1.5",
-                                    !isTestMode ? "bg-white dark:bg-slate-700 text-indigo-600 dark:text-white shadow-sm" : "text-slate-500 hover:text-slate-700 dark:text-slate-400"
-                                )}
-                            >
-                                <ShieldCheck className="w-3 h-3" /> Live
-                            </button>
-                            <button
-                                onClick={toggleTestMode}
-                                className={cn(
-                                    "px-3 py-1 text-[11px] font-bold rounded-lg transition-all flex items-center gap-1.5",
-                                    isTestMode ? "bg-amber-500 text-white shadow-sm" : "text-slate-500 hover:text-slate-700 dark:text-slate-400"
-                                )}
-                            >
-                                <Beaker className="w-3 h-3" /> Test
-                            </button>
-                        </div>
 
                         {/* Theme Toggle */}
                         {mounted && (
@@ -170,7 +153,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                 </header>
 
                 {/* Scrollable Content */}
-                <div className="flex-1 overflow-y-auto z-10 p-4 md:p-8">
+                <div className="flex-1 overflow-y-auto z-10 p-4 md:pt-4 md:pb-8 md:px-8">
                     <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}

@@ -62,6 +62,13 @@ export default function ApiDocsPage() {
             ]
         },
         {
+            group: "Payouts API",
+            items: [
+                { id: "request-withdrawal", title: "Submit Withdrawal", method: "POST" },
+                { id: "withdrawal-status", title: "Check Status", method: "GET" },
+            ]
+        },
+        {
             group: "Currencies",
             items: [
                 { id: "list-currencies", title: "Available Currencies", method: "GET" },
@@ -300,9 +307,64 @@ export default function ApiDocsPage() {
                                     <code className="text-xs font-mono text-slate-500 dark:text-slate-400 font-bold">/api/v1/payment</code>
                                 </div>
                                 <h2 className="text-3xl font-black text-[#1a1f36] dark:text-white mb-6 tracking-tight">Create Payment</h2>
-                                <p className="text-slate-600 dark:text-slate-400 mb-6 font-medium">
-                                    Direct payment creation. Use this if you want to handle currency selection on your own website.
+                                <p className="text-slate-600 dark:text-slate-400 mb-8 font-medium">
+                                    Direct payment creation. Use this when you already know which cryptocurrency the customer will pay with. Provide a specific <code className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded font-mono text-xs">pay_currency</code> to lock it in, or omit it to let the customer choose.
                                 </p>
+                                <div className="space-y-0 divide-y divide-slate-100 dark:divide-white/5">
+                                    <h4 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4 pb-2 border-b border-slate-100 dark:border-white/5">Body Parameters</h4>
+                                    {[
+                                        { name: "price_amount", type: "number", req: true, desc: "The fiat amount you want to charge (e.g. 100.00)." },
+                                        { name: "price_currency", type: "string", req: true, desc: 'ISO currency code of the price — "usd", "eur", "gbp".' },
+                                        { name: "pay_currency", type: "string", req: false, desc: 'Crypto ticker the customer pays with — "btc", "eth", "usdt". If omitted, customer chooses on checkout.' },
+                                        { name: "order_id", type: "string", req: false, desc: "Your internal order reference. Returned in all callbacks." },
+                                        { name: "order_description", type: "string", req: false, desc: "Short product or service description shown on the payment page." },
+                                        { name: "ipn_callback_url", type: "string", req: false, desc: "HTTPS URL that receives POST notifications on every status change." },
+                                        { name: "success_url", type: "string", req: false, desc: "Page to redirect the customer after a successful payment." },
+                                        { name: "cancel_url", type: "string", req: false, desc: "Page to redirect the customer if they cancel." },
+                                    ].map((p) => (
+                                        <div key={p.name} className="flex gap-8 py-5">
+                                            <div className="w-44 flex-shrink-0">
+                                                <code className="text-sm font-black text-[#1a1f36] dark:text-white font-mono block mb-1">{p.name}</code>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-[10px] text-slate-400 font-bold font-mono italic">{p.type}</span>
+                                                    {p.req && <span className="text-[8px] text-rose-500 font-black uppercase tracking-tighter">required</span>}
+                                                    {!p.req && <span className="text-[8px] text-slate-400 font-black uppercase tracking-tighter">optional</span>}
+                                                </div>
+                                            </div>
+                                            <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed font-medium">{p.desc}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="mt-6 p-5 rounded-2xl bg-slate-900 border border-white/5 font-mono text-xs overflow-x-auto">
+                                    <div className="text-slate-500 mb-2 text-[10px] uppercase tracking-widest">PHP Example</div>
+                                    <pre className="m-0 text-slate-300 leading-relaxed whitespace-pre-wrap">{`<?php
+$api_key = "sk_live_YOUR_KEY";
+$data = [
+  "price_amount"    => 100.00,
+  "price_currency"  => "usd",
+  "pay_currency"    => "btc",
+  "order_id"        => "ORD-001",
+  "order_description" => "Premium Plan",
+  "ipn_callback_url" => "https://yoursite.com/callback.php",
+  "success_url"     => "https://yoursite.com/success.php",
+  "cancel_url"      => "https://yoursite.com/cancel.php"
+];
+$ch = curl_init("https://api.soltio.com/v1/payment");
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+  "Authorization: Bearer $api_key",
+  "Content-Type: application/json"
+]);
+$res = json_decode(curl_exec($ch), true);
+curl_close($ch);
+if (isset($res['paymentUrl'])) {
+  header("Location: " . $res['paymentUrl']);
+  exit();
+}
+?>`}</pre>
+                                </div>
                             </section>
 
                             {/* Get Payment Estimate */}
@@ -312,9 +374,32 @@ export default function ApiDocsPage() {
                                     <code className="text-xs font-mono text-slate-500 dark:text-slate-400 font-bold">/api/v1/payment/estimate</code>
                                 </div>
                                 <h2 className="text-3xl font-black text-[#1a1f36] dark:text-white mb-6 tracking-tight">Get Payment Estimate</h2>
-                                <p className="text-slate-600 dark:text-slate-400 mb-6 font-bold leading-relaxed">
-                                    Calculate exactly how much crypto a user needs to send for a specific fiat amount including network fees.
+                                <p className="text-slate-600 dark:text-slate-400 mb-8 font-medium leading-relaxed">
+                                    Calculate exactly how much crypto a customer needs to send for a given fiat amount, including live exchange rates and network fees. Useful for showing a crypto preview before creating a payment.
                                 </p>
+                                <h4 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">Query Parameters</h4>
+                                <div className="space-y-0 divide-y divide-slate-100 dark:divide-white/5 mb-6">
+                                    {[
+                                        { name: "amount", type: "number", req: true, desc: "Fiat amount to convert (e.g. 100)." },
+                                        { name: "currency_from", type: "string", req: true, desc: 'Source fiat currency code — "usd", "eur".' },
+                                        { name: "currency_to", type: "string", req: true, desc: 'Target crypto ticker — "btc", "eth", "usdt".' },
+                                    ].map((p) => (
+                                        <div key={p.name} className="flex gap-8 py-4">
+                                            <div className="w-40 flex-shrink-0">
+                                                <code className="text-sm font-black text-[#1a1f36] dark:text-white font-mono block mb-1">{p.name}</code>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-[10px] text-slate-400 font-bold font-mono italic">{p.type}</span>
+                                                    {p.req && <span className="text-[8px] text-rose-500 font-black uppercase tracking-tighter">required</span>}
+                                                </div>
+                                            </div>
+                                            <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed font-medium">{p.desc}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="p-4 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 font-mono text-xs">
+                                    <span className="text-slate-400">GET </span>
+                                    <span className="text-indigo-600 dark:text-indigo-400">/api/v1/payment/estimate?amount=100&currency_from=usd&currency_to=btc</span>
+                                </div>
                             </section>
 
                             {/* Payment Status */}
@@ -337,7 +422,55 @@ export default function ApiDocsPage() {
                                 </div>
                             </section>
 
-                            {/* Available Currencies */}
+                            {/* Withdrawals */}
+                            <section id="request-withdrawal" className="scroll-mt-32">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <span className="text-[10px] font-black bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded uppercase tracking-[2px]">POST</span>
+                                    <code className="text-xs font-mono text-slate-500 dark:text-slate-400 font-bold">/api/v1/withdraw</code>
+                                </div>
+                                <h2 className="text-3xl font-black text-[#1a1f36] dark:text-white mb-6 tracking-tight">Submit Withdrawal</h2>
+                                <p className="text-slate-600 dark:text-slate-400 mb-10 leading-relaxed font-medium">
+                                    Request a payout of your available balance to an external wallet.
+                                </p>
+                                <div className="space-y-4">
+                                    {[
+                                        { name: "amount", type: "number", req: true, desc: "Amount to withdraw from your available balance." },
+                                        { name: "currency", type: "string", req: true, desc: "Crypto ticker (e.g. BTC, USDT)." },
+                                        { name: "address", type: "string", req: true, desc: "The destination wallet address." },
+                                    ].map((param) => (
+                                        <div key={param.name} className="flex gap-16 border-b border-slate-100 dark:border-white/5 pb-4 last:border-none">
+                                            <div className="w-40 flex-shrink-0">
+                                                <code className="text-sm font-black text-[#1a1f36] dark:text-white font-mono block mb-1">{param.name}</code>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold font-mono italic">{param.type}</span>
+                                                    {param.req && <span className="text-[8px] text-rose-500 font-black uppercase tracking-tighter">required</span>}
+                                                </div>
+                                            </div>
+                                            <p className="text-sm text-slate-500 dark:text-slate-500 leading-relaxed font-medium">{param.desc}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
+
+                            {/* Withdrawal Status */}
+                            <section id="withdrawal-status" className="scroll-mt-32">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <span className="text-[10px] font-black bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded uppercase tracking-[2px]">GET</span>
+                                    <code className="text-xs font-mono text-slate-500 dark:text-slate-400 font-bold">/api/v1/withdraw/:id</code>
+                                </div>
+                                <h2 className="text-3xl font-black text-[#1a1f36] dark:text-white mb-6 tracking-tight">Withdrawal Status</h2>
+                                <p className="text-slate-600 dark:text-slate-400 mb-8 leading-relaxed font-medium">
+                                    Check the fulfillment status of a withdrawal request.
+                                </p>
+                                <div className="grid grid-cols-3 gap-3">
+                                    {['PENDING', 'APPROVED', 'COMPLETED', 'REJECTED'].map(status => (
+                                        <div key={status} className="px-4 py-2 rounded-2xl bg-white/40 dark:bg-white/5 border border-slate-200 dark:border-white/10 font-mono text-[10px] font-black text-slate-500 flex items-center justify-between">
+                                            {status}
+                                            <div className={`w-1.5 h-1.5 rounded-full ${status === 'COMPLETED' ? 'bg-emerald-500' : status === 'REJECTED' ? 'bg-rose-500' : 'bg-amber-500'}`} />
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
                             <section id="list-currencies" className="scroll-mt-32">
                                 <h2 className="text-3xl font-black text-[#1a1f36] dark:text-white mb-6 tracking-tight">Available Currencies</h2>
                                 <p className="text-slate-600 dark:text-slate-400 mb-8 leading-relaxed font-medium">
@@ -355,23 +488,153 @@ export default function ApiDocsPage() {
                             {/* IPN (Webhooks) */}
                             <section id="webhooks" className="scroll-mt-32">
                                 <h2 className="text-3xl font-black text-[#1a1f36] dark:text-white mb-6 tracking-tight">IPN (Webhooks)</h2>
-                                <p className="text-slate-600 dark:text-slate-400 mb-10 leading-relaxed font-medium">
-                                    Instant Payment Notifications (IPN) are POST requests sent to your server whenever a payment status changes.
+                                <p className="text-slate-600 dark:text-slate-400 mb-6 leading-relaxed font-medium">
+                                    Instant Payment Notifications (IPN) are POST requests sent to your server whenever a payment status changes. Configure your IPN URL in Dashboard → Settings → Webhooks.
                                 </p>
+
+                                <div className="p-6 rounded-[28px] bg-slate-900 border border-white/5 mb-8">
+                                    <div className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-4">Example IPN Payload</div>
+                                    <pre className="m-0 text-emerald-400 font-mono text-xs whitespace-pre-wrap">{`{
+  "payment_id": "SOL-829104",
+  "payment_status": "finished",
+  "pay_address": "0x7a8...219",
+  "pay_amount": 0.0452,
+  "pay_currency": "eth",
+  "actually_paid": 0.0452,
+  "order_id": "ORD-5721",
+  "order_description": "Enterprise Subscription",
+  "purchase_id": "5209142",
+  "created_at": "2026-02-27T10:52:01.000Z",
+  "updated_at": "2026-02-27T10:55:12.000Z"
+}`}</pre>
+                                </div>
+
+                                <div className="bg-amber-500/10 dark:bg-orange-500/5 border border-amber-500/20 rounded-2xl p-4 mb-8 flex gap-3">
+                                    <AlertCircle className="w-5 h-5 text-amber-600 dark:text-orange-400 flex-shrink-0 mt-0.5" />
+                                    <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">Always verify the <code className="bg-amber-500/10 px-1.5 py-0.5 rounded font-mono text-xs font-black">X-Soltio-Signature</code> header before processing any IPN request. Never trust unverified callbacks.</p>
+                                </div>
+
                                 <div className="space-y-6">
-                                    <div className="p-8 rounded-[32px] bg-white/40 dark:bg-indigo-600/5 border border-slate-200 dark:border-indigo-600/20 backdrop-blur-md shadow-sm">
+                                    <div className="p-8 rounded-[28px] bg-white/40 dark:bg-indigo-600/5 border border-slate-200 dark:border-indigo-600/20 backdrop-blur-md shadow-sm">
                                         <h4 className="text-indigo-600 dark:text-indigo-400 font-black mb-4 flex items-center gap-2 uppercase tracking-widest text-xs">
-                                            <CheckCircle2 className="w-5 h-5" />
-                                            Verifying Signatures
+                                            <CheckCircle2 className="w-4 h-4" />
+                                            Signature Verification (Node.js)
                                         </h4>
-                                        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6 leading-relaxed font-bold">
-                                            We include an <code className="bg-indigo-500/10 dark:bg-indigo-600/20 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded font-black font-mono">X-Soltio-Signature</code> header. Use your Webhook Secret to generate an HMAC-SHA512 of the payload and compare it to this header.
-                                        </p>
-                                        <div className="flex items-center gap-3 p-4 rounded-2xl bg-slate-900/90 border border-white/5 font-mono text-[11px] shadow-2xl">
-                                            <Terminal className="w-4 h-4 text-emerald-400" />
-                                            <span className="text-emerald-400 overflow-hidden text-ellipsis whitespace-nowrap">hash_hmac('sha512', $payload, $secret)</span>
+                                        <div className="rounded-2xl bg-slate-900 border border-white/5 font-mono text-xs overflow-x-auto">
+                                            <pre className="m-0 p-5 text-slate-300 leading-relaxed whitespace-pre-wrap">{`const crypto = require('crypto');
+
+function verifySignature(payload, secret, receivedSignature) {
+  // 1. Sort keys alphabetically
+  const sortedPayload = Object.keys(payload)
+    .sort()
+    .reduce((obj, key) => {
+      obj[key] = payload[key];
+      return obj;
+    }, {});
+
+  // 2. Stringify without slashes escaping
+  const data = JSON.stringify(sortedPayload);
+
+  // 3. Compute HMAC SHA512
+  const hmac = crypto.createHmac('sha512', secret);
+  const digest = hmac.update(data).digest('hex');
+
+  return crypto.timingSafeEqual(
+    Buffer.from(digest),
+    Buffer.from(receivedSignature)
+  );
+}`}</pre>
                                         </div>
                                     </div>
+
+                                    <div className="p-8 rounded-[28px] bg-white/40 dark:bg-white/5 border border-slate-200 dark:border-white/10 shadow-sm">
+                                        <h4 className="text-indigo-600 dark:text-indigo-400 font-black mb-4 flex items-center gap-2 uppercase tracking-widest text-xs">
+                                            <CheckCircle2 className="w-4 h-4" />
+                                            Signature Verification (PHP)
+                                        </h4>
+                                        <div className="rounded-2xl bg-slate-900 border border-white/5 font-mono text-xs overflow-x-auto">
+                                            <pre className="m-0 p-5 text-slate-300 leading-relaxed whitespace-pre-wrap">{`<?php
+$secret = "YOUR_WEBHOOK_SECRET";
+$body = file_get_contents('php://input');
+$received = $_SERVER['HTTP_X_SOLTIO_SIGNATURE'];
+
+$data = json_decode($body, true);
+ksort($data); // Sort keys
+
+$sorted_json = json_encode($data, JSON_UNESCAPED_SLASHES);
+$computed = hash_hmac('sha512', $sorted_json, $secret);
+
+if (hash_equals($computed, $received)) {
+    // Verified
+}
+?>`}</pre>
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+
+                            {/* Sandbox Testing */}
+                            <section id="sandbox-testing" className="scroll-mt-32">
+                                <h2 className="text-3xl font-black text-[#1a1f36] dark:text-white mb-6 tracking-tight">Sandbox Testing</h2>
+                                <p className="text-slate-600 dark:text-slate-400 mb-8 leading-relaxed font-medium">
+                                    Use sandbox mode to test your integration without real funds. Sandbox API keys are prefixed with <code className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded font-mono text-xs font-black">sk_test_</code> and all payments are simulated.
+                                </p>
+                                <div className="grid grid-cols-1 gap-4 mb-6">
+                                    {[
+                                        { label: "Sandbox Base URL", value: "https://api.soltio.com/v1", note: "Same endpoint — key prefix determines mode" },
+                                        { label: "Test API Key", value: "sk_test_...", note: "Generate from Dashboard → API Keys → Sandbox" },
+                                        { label: "Test Webhook URL", value: "https://webhook.site/...", note: "Use webhook.site to inspect IPN payloads" },
+                                    ].map(r => (
+                                        <div key={r.label} className="flex items-center justify-between p-4 rounded-2xl bg-white/40 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+                                            <div>
+                                                <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">{r.label}</div>
+                                                <code className="text-sm text-indigo-600 dark:text-indigo-400 font-mono font-bold">{r.value}</code>
+                                            </div>
+                                            <p className="text-xs text-slate-400 dark:text-slate-500 font-medium max-w-[180px] text-right">{r.note}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-5 flex gap-3">
+                                    <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                                    <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">Sandbox payments auto-confirm after <strong>2 minutes</strong>. Your IPN callback will fire with <code className="font-mono text-xs">payment_status: finished</code> automatically.</p>
+                                </div>
+                            </section>
+
+                            {/* Error Codes */}
+                            <section id="error-codes" className="scroll-mt-32">
+                                <h2 className="text-3xl font-black text-[#1a1f36] dark:text-white mb-6 tracking-tight">Error Codes</h2>
+                                <p className="text-slate-600 dark:text-slate-400 mb-8 leading-relaxed font-medium">
+                                    All errors return a consistent JSON body with a <code className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded font-mono text-xs font-black">message</code> field describing the problem.
+                                </p>
+                                <div className="space-y-3">
+                                    {[
+                                        { code: "400", label: "Bad Request", color: "amber", desc: "Missing or invalid parameters. Check the message field for details." },
+                                        { code: "401", label: "Unauthorized", color: "rose", desc: "API key is missing, invalid, or revoked. Regenerate from Dashboard." },
+                                        { code: "403", label: "Forbidden", color: "rose", desc: "Your plan does not allow this action (e.g. exceeded payment limit)." },
+                                        { code: "404", label: "Not Found", color: "slate", desc: "The requested resource (payment, invoice) does not exist." },
+                                        { code: "422", label: "Unprocessable", color: "amber", desc: "Amount below minimum or currency pair not supported." },
+                                        { code: "429", label: "Rate Limited", color: "amber", desc: "Too many requests. Default limit: 60 req/min. Back off and retry." },
+                                        { code: "500", label: "Server Error", color: "rose", desc: "Internal server error. Retry after a short delay." },
+                                    ].map(e => (
+                                        <div key={e.code} className="flex items-start gap-4 p-4 rounded-2xl bg-white/40 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+                                            <span className={`text-xs font-black font-mono px-2 py-1 rounded-lg flex-shrink-0 ${e.color === 'rose' ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400' :
+                                                e.color === 'amber' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' :
+                                                    'bg-slate-500/10 text-slate-600 dark:text-slate-400'
+                                                }`}>{e.code}</span>
+                                            <div>
+                                                <div className="text-sm font-black text-[#1a1f36] dark:text-white mb-0.5">{e.label}</div>
+                                                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{e.desc}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="mt-6 p-5 rounded-2xl bg-slate-900 border border-white/5 font-mono text-xs">
+                                    <div className="text-slate-500 mb-2 text-[10px] uppercase tracking-widest">Error Response Shape</div>
+                                    <pre className="m-0 text-slate-300">{`{
+  "error": true,
+  "message": "price_amount must be a positive number",
+  "code": 400
+}`}</pre>
                                 </div>
                             </section>
 
@@ -384,13 +647,13 @@ export default function ApiDocsPage() {
                                 <div className="bg-[#0b1120] border border-white/10 rounded-3xl overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)]">
                                     <div className="flex items-center justify-between px-6 py-4 bg-[#111827] border-b border-white/5">
                                         <div className="flex gap-4">
-                                            {["curl", "node", "python"].map((tab) => (
+                                            {["curl", "php", "node", "python"].map((tab) => (
                                                 <button
                                                     key={tab}
                                                     onClick={() => setActiveTab(tab)}
                                                     className={`text-[10px] font-black uppercase tracking-[1.5px] transition-all border-none bg-transparent cursor-pointer ${activeTab === tab ? "text-indigo-400" : "text-slate-500 hover:text-slate-300"}`}
                                                 >
-                                                    {tab === "curl" ? "cURL" : tab === "node" ? "Node.js" : "Python"}
+                                                    {tab === "curl" ? "cURL" : tab === "php" ? "PHP" : tab === "node" ? "Node.js" : "Python"}
                                                 </button>
                                             ))}
                                         </div>
@@ -458,6 +721,35 @@ export default function ApiDocsPage() {
                                                         print(response.json())
                                                     </code>
                                                 </motion.pre>
+                                            )}
+                                            {activeTab === "php" && (
+                                                <motion.pre key="php" initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }} className="m-0 text-slate-300 text-xs leading-relaxed whitespace-pre-wrap">{`<?php
+$api_key = "sk_live_YOUR_KEY";
+$data = [
+  "price_amount"     => 99.00,
+  "price_currency"   => "usd",
+  "pay_currency"     => "btc",
+  "order_id"         => "ORD-001",
+  "order_description"=> "Premium Plan",
+  "ipn_callback_url" => "https://yoursite.com/callback.php",
+  "success_url"      => "https://yoursite.com/success.php",
+  "cancel_url"       => "https://yoursite.com/cancel.php"
+];
+$ch = curl_init("https://api.soltio.com/v1/payment");
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+  "Authorization: Bearer $api_key",
+  "Content-Type: application/json"
+]);
+$res = json_decode(curl_exec($ch), true);
+curl_close($ch);
+if (isset($res['paymentUrl'])) {
+  header("Location: " . $res['paymentUrl']);
+  exit();
+}
+?>`}</motion.pre>
                                             )}
                                         </AnimatePresence>
                                     </div>
